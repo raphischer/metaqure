@@ -4,6 +4,6 @@ for d in "olivetti_faces" "arrhythmia" "kc2" "climate-model-simulation-crashes" 
 do
     for m in "kNN" "SVM" "RF" "XRF" "AB" "GNB" "RR" "LR" "SGD" "MLP"
     do
-        python run_hyperparam_search.py --ds $d --method $m --data-home $1
+        timeout 3600s python run_hyperparam_search.py --ds $d --method $m --data-home $1
     done
 done

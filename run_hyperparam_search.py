@@ -2,6 +2,7 @@ import argparse
 
 import time
 import os
+import json
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,22 @@ from strep.util import write_json
 def hyperparam_fname(ds_name, method, outdir='./hyperparameters'):
     return os.path.join(outdir, f'hyperparameters__{ds_name}__{method.replace(" ", "_")}.json')
 
+
+def init_with_best_hyperparams(ds_name, method, outdir='./hyperparameters'):
+    clf = CLSF[method]
+    fname = hyperparam_fname(ds_name, method, outdir)
+    try:
+        with open(fname, 'r') as hyperf:
+            hyper_content = json.load(hyperf)
+        best_rank = hyper_content['rank_test_score'].index(1)
+        best_params = hyper_content['params'][best_rank]
+        clf[1].set_params(**best_params)
+        sensitivity = np.std(hyper_content['mean_test_score'])
+    except FileNotFoundError:
+        print('  no hyperparameter search information found, using default hyperparameters instead')
+        sensitivity = np.nan
+    return clf, sensitivity
+    
 
 def custom_hyperparam_search(method, X, y, outfile, n_iter=50, time_budget=10, random_state=0, cv=5, multiprocess=False):
     _, clf, cls_params, _ = CLSF[method]
@@ -48,9 +65,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-home", default=None)
-    parser.add_argument("--ds", default='all')
-    parser.add_argument("--method", default='RR')
-    parser.add_argument("--outdir", default='./hyperparameters')
+    parser.add_argument("--ds", default='kc2')
+    parser.add_argument("--method", default='SVM')
     parser.add_argument("--multiprocess", default=True)
     args = parser.parse_args()
 
@@ -58,7 +74,7 @@ if __name__ == "__main__":
 
     for ds in all_ds:
         X_train, X_test, y_train, y_test, feat = load_data(ds, args.data_home)
-        outfile = hyperparam_fname(ds, args.method, args.outdir)
+        outfile = hyperparam_fname(ds, args.method)
         print(f'Searching hyperparameters for {args.method:<5} on {ds}')
         custom_hyperparam_search(args.method, X_train, y_train, outfile)
 

@@ -111,7 +111,7 @@ CLSF = {
         'Linear Stochastic Gradient Descent',
         linear_model.SGDClassifier(max_iter=500),
         {
-            "loss" : ['hinge', 'log_loss', 'log', 'modified_huber', 'squared_hinge', 'perceptron'],
+            "loss" : ['hinge', 'log_loss', 'modified_huber', 'squared_hinge', 'perceptron', 'squared_error'],
             "penalty": ['l2', 'l1', 'elasticnet'],
             'alpha': uniform(0, 2)
         },
