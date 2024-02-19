@@ -19,7 +19,7 @@ def hyperparam_fname(ds_name, method, outdir='./hyperparameters'):
     return os.path.join(outdir, f'hyperparameters__{ds_name}__{method.replace(" ", "_")}.json')
 
 
-def init_with_best_hyperparams(ds_name, method, outdir='./hyperparameters'):
+def init_with_best_hyperparams(ds_name, method, n_jobs=-1, outdir='./hyperparameters'):
     clf = CLSF[method]
     fname = hyperparam_fname(ds_name, method, outdir)
     try:
@@ -27,6 +27,7 @@ def init_with_best_hyperparams(ds_name, method, outdir='./hyperparameters'):
             hyper_content = json.load(hyperf)
         best_rank = hyper_content['rank_test_score'].index(1)
         best_params = hyper_content['params'][best_rank]
+        best_params['n_jobs'] = n_jobs
         clf[1].set_params(**best_params)
         sensitivity = np.std(hyper_content['mean_test_score'])
     except FileNotFoundError:

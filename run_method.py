@@ -41,6 +41,7 @@ def score(y_pred, y_proba, y_test, clf):
         metrics['top_5_accuracy'] = top_k_accuracy_score(y_test, y_proba, k=5, labels=clf.classes_)
     else:
         metrics['top_5_accuracy'] = metrics['accuracy'] # top5 is bounded by top1
+    return metrics
 
 # additional metrics: generalization? hyperparameter sensitivity? hyperparameter fitting effort? model size?
 
@@ -75,7 +76,7 @@ def evaluate_single(args):
     sys.stdout = Logger(os.path.join(output_dir, f'logfile.txt'))
 
     X_train, X_test, y_train, y_test, feature_names = load_data(args.ds)
-    (_, clf, _, param_func), sensitivity  = init_with_best_hyperparams(args.ds, args.method)
+    (_, clf, _, param_func), sensitivity = init_with_best_hyperparams(args.ds, args.method)
 
     # train
     emissions_tracker = OfflineEmissionsTracker(measure_power_secs=args.monitor_interval, log_level='warning', country_iso_code="DEU", save_to_file=True, output_dir=output_dir)
