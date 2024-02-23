@@ -178,7 +178,7 @@ CLSF = {
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-home", default=None)
+    parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
     parser.add_argument("--ds", default='all')
     parser.add_argument("--method", default='RR')
     args = parser.parse_args()

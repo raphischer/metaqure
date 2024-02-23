@@ -1,4 +1,5 @@
 import argparse
+import os
 
 def warn(*args, **kwargs):
     pass
@@ -9,17 +10,57 @@ import numpy as np
 import pandas as pd
 
 from sklearn import datasets, preprocessing
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
-
+from seedpy import fixedseed
 from scipy import sparse
+
+
+
+# can be updated by running ucimlrepo.list_available_datasets
+# res = {}
+# for row in a.split('\n'):
+#     match = re.match(r'(.*)  (\d+)\s*', row)
+#     res[match.group(1).strip().lower().replace(' ', '_').replace('(', '').replace(')', '').replace("'", '')] = int(match.group(2))
+UCI_MAP = {'abalone': 1, 'adult': 2, 'auto_mpg': 9, 'automobile': 10, 'balance_scale': 12, 'breast_cancer': 14,
+           'breast_cancer_wisconsin_original': 15, 'breast_cancer_wisconsin_prognostic': 16,
+           'breast_cancer_wisconsin_diagnostic': 17, 'car_evaluation': 19, 'census_income': 20, 'credit_approval': 27,
+           'computer_hardware': 29, 'contraceptive_method_choice': 30, 'covertype': 31, 'dermatology': 33, 'ecoli': 39,
+           'glass_identification': 42, 'heart_disease': 45, 'hepatitis': 46, 'image_segmentation': 50, 'ionosphere': 52,
+           'iris': 53, 'isolet': 54, 'letter_recognition': 59, 'liver_disorders': 60, 'lung_cancer': 62, 'mushroom': 73,
+           'nursery': 76, 'optical_recognition_of_handwritten_digits': 80, 'pen-based_recognition_of_handwritten_digits': 81,
+           'solar_flare': 89, 'soybean_large': 90, 'spambase': 94, 'tic-tac-toe_endgame': 101,
+           'congressional_voting_records': 105, 'wine': 109, 'yeast': 110, 'zoo': 111,
+           'statlog_australian_credit_approval': 143, 'statlog_german_credit_data': 144, 'statlog_heart': 145,
+           'statlog_landsat_satellite': 146, 'statlog_shuttle': 148, 'statlog_vehicle_silhouettes': 149,
+           'connectionist_bench_sonar,_mines_vs._rocks': 151, 'magic_gamma_telescope': 159, 'forest_fires': 162,
+           'concrete_compressive_strength': 165, 'parkinsons': 174, 'wine_quality': 186, 'parkinsons_telemonitoring': 189,
+           'bank_marketing': 222, 'ilpd_indian_liver_patient_dataset': 225,
+           'individual_household_electric_power_consumption': 235, 'energy_efficiency': 242, 'banknote_authentication': 267,
+           'bike_sharing_dataset': 275, 'thoracic_surgery_data': 277, 'wholesale_customers': 292,
+           'diabetes_130-us_hospitals_for_years_1999-2008': 296, 'student_performance': 320,
+           'diabetic_retinopathy_debrecen': 329, 'online_news_popularity': 332, 'default_of_credit_card_clients': 350,
+           'online_retail': 352, 'air_quality': 360, 'online_shoppers_purchasing_intention_dataset': 468,
+           'electrical_grid_stability_simulated_data': 471, 'real_estate_valuation': 477,
+           'heart_failure_clinical_records': 519,
+           'estimation_of_obesity_levels_based_on_eating_habits_and_physical_condition': 544, 'rice_cammeo_and_osmancik': 545,
+           'apartment_for_rent_classified': 555, 'seoul_bike_sharing_demand': 560, 'bone_marrow_transplant:_children': 565,
+           'hcv_data': 571, 'myocardial_infarction_complications': 579, 'ai4i_2020_predictive_maintenance_dataset': 601,
+           'dry_bean_dataset': 602, 'predict_students_dropout_and_academic_success': 697,
+           'glioma_grading_clinical_and_mutation_features': 759, 'sepsis_survival_minimal_clinical_records': 827,
+           'raisin': 850, 'cirrhosis_patient_survival_prediction': 878, 'support2': 880,
+           'national_health_and_nutrition_health_survey_2013-2014_nhanes_age_prediction_subset': 887,
+           'aids_clinical_trials_group_study_175': 890, 'cdc_diabetes_health_indicators': 891,
+           'infrared_thermography_temperature': 925, 'national_poll_on_healthy_aging_npha': 936,
+           'regensburg_pediatric_appendicitis': 938           
+}
 
 # Sklearn real-life datasets
 SKLEARN_DATASETS = [
     'olivetti_faces',
-    'lfw_people',
-    'lfw_pairs',
+    # 'lfw_people', # TODO too hard / image data 
+    # 'lfw_pairs', # TODO too hard / image data
     '20newsgroups_vectorized',
     'covtype',
     # 'kddcup99', # TODO fix error
@@ -60,7 +101,7 @@ OPENML_DATASETS = [
     'SpeedDating',
     'mnist_784',
     'banknote-authentication',
-    'adult',
+    # 'adult', # UCI census_income
     'Titanic',
     'Satellite',
     'bank-marketing',
@@ -73,7 +114,86 @@ OPENML_DATASETS = [
     'Bioresponse',
 ]
 
-DATASETS = SKLEARN_DATASETS + OPENML_DATASETS
+UCI_DATASETS = [
+    'abalone',
+    'adult',
+    'balance_scale',
+    'breast_cancer',
+    'breast_cancer_wisconsin_original',
+    'breast_cancer_wisconsin_prognostic',
+    # 'breast_cancer_wisconsin_diagnostic', # OPENML wdbc
+    'car_evaluation',
+    # 'census_income', # OPENML adult
+    'credit_approval',
+    'contraceptive_method_choice',
+    'dermatology',
+    'ecoli',
+    'glass_identification',
+    'heart_disease',
+    'hepatitis',
+    'image_segmentation',
+    'ionosphere',
+    'iris',
+    'isolet',
+    'letter_recognition',
+    'lung_cancer',
+    'mushroom',
+    'nursery',
+    'optical_recognition_of_handwritten_digits',
+    'pen-based_recognition_of_handwritten_digits',
+    'soybean_large',
+    # 'tic-tac-toe_endgame', # OPENML tic-tac-toe
+    'congressional_voting_records',
+    'wine',
+    'yeast',
+    'zoo',
+    # 'statlog_australian_credit_approval', # UCI credit_approval
+    # 'statlog_german_credit_data', # OPENML credit-g
+    'statlog_heart',
+    'statlog_landsat_satellite',
+    'statlog_shuttle',
+    'statlog_vehicle_silhouettes',
+    'connectionist_bench_sonar,_mines_vs._rocks',
+    'magic_gamma_telescope',
+    'parkinsons',
+    'wine_quality',
+    # 'bank_marketing', # OPENML bank-marketing
+    # 'ilpd_indian_liver_patient_dataset', # OPENML ilpd
+    # 'energy_efficiency', # too hard to learn
+    # 'banknote_authentication', # OPENML banknote-authentication
+    'thoracic_surgery_data',
+    'wholesale_customers',
+    'diabetes_130-us_hospitals_for_years_1999-2008',
+    'student_performance',
+    'diabetic_retinopathy_debrecen',
+    # 'online_news_popularity', # too hard to learn
+    'default_of_credit_card_clients',
+    # 'online_retail', # fetch crashes
+    'online_shoppers_purchasing_intention_dataset',
+    'electrical_grid_stability_simulated_data',
+    'heart_failure_clinical_records',
+    'estimation_of_obesity_levels_based_on_eating_habits_and_physical_condition',
+    'rice_cammeo_and_osmancik',
+    # 'apartment_for_rent_classified', # fetch crashes
+    'bone_marrow_transplant:_children',
+    'hcv_data',
+    'myocardial_infarction_complications',
+    'ai4i_2020_predictive_maintenance_dataset',
+    'dry_bean_dataset',
+    'predict_students_dropout_and_academic_success',
+    'glioma_grading_clinical_and_mutation_features',
+    'sepsis_survival_minimal_clinical_records',
+    'raisin',
+    'cirrhosis_patient_survival_prediction',
+    'support2',
+    'national_health_and_nutrition_health_survey_2013-2014_nhanes_age_prediction_subset',
+    'aids_clinical_trials_group_study_175',
+    'cdc_diabetes_health_indicators',
+    'national_poll_on_healthy_aging_npha',
+    'regensburg_pediatric_appendicitis'
+]
+
+DATASETS = UCI_DATASETS + SKLEARN_DATASETS + OPENML_DATASETS
 
 
 def load_sklearn_feature_names(ds):
@@ -113,97 +233,79 @@ def load_openml(ds_name, data_home=None):
     return X_train, X_test, y_train, y_test, feature_names
 
 
-def load_data(ds_name, data_home=None):
-    if ds_name in SKLEARN_DATASETS:
-        X_train, X_test, y_train, y_test, feature_names = load_sklearn(ds_name, data_home)
-    elif ds_name in OPENML_DATASETS:
-        X_train, X_test, y_train, y_test, feature_names = load_openml(ds_name, data_home)
-    else:
-        raise RuntimeError(f'Dataset {ds_name} not found!')
-    
-    imp = SimpleImputer(missing_values=np.nan, strategy='median')
-    X_train = imp.fit_transform(X_train)
-    X_test = imp.fit_transform(X_test)
+def load_uci(ds_name, data_home=None):
+    fname = os.path.join(data_home, 'uci_local', f'{ds_name}.pkl')
+    try:
+        X = pd.read_pickle(fname)
+    except FileNotFoundError:
+        import ucimlrepo
+        ds = ucimlrepo.fetch_ucirepo(id=UCI_MAP[ds_name])
+        if 'Classification' not in ds['metadata']['tasks']:
+            raise RuntimeError()
+        X = pd.concat([ds.data.features, ds.data.targets], axis=1)
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
+        X.to_pickle(fname)
+    X, y = X.iloc[:,:-1], X.iloc[:, -1]
+    X = pd.get_dummies(X).astype(float) # one-hot
+    X, feature_names = X.values, X.columns.values
+    y, cat = pd.factorize(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
     return X_train, X_test, y_train, y_test, feature_names
 
 
+def load_data(ds_name, data_home=None, seed=0, subsample=None):
+    with fixedseed(np, seed=seed):
+        if ds_name in SKLEARN_DATASETS:
+            X_train, X_test, y_train, y_test, feature_names = load_sklearn(ds_name, data_home)
+        elif ds_name in OPENML_DATASETS:
+            X_train, X_test, y_train, y_test, feature_names = load_openml(ds_name, data_home)
+        elif ds_name in UCI_DATASETS:
+            X_train, X_test, y_train, y_test, feature_names = load_uci(ds_name, data_home)
+        else:
+            raise RuntimeError(f'Dataset {ds_name} not found!')
+        
+        imp = SimpleImputer(missing_values=np.nan, strategy='median')
+        X_train = imp.fit_transform(X_train)
+        X_test = imp.fit_transform(X_test)
 
+        if subsample is not None:
+            kf = [idc[1] for idc in KFold(n_splits=subsample[0], random_state=seed, shuffle=True).split(np.arange(len(feature_names)))]
+            idc = kf[subsample[1]]
+            print(f'split {subsample[1]} {idc}')
+            X_train = X_train[:,idc]
+            X_test = X_test[:,idc]
+            feature_names = feature_names[idc]
+    return X_train, X_test, y_train, y_test, list(feature_names)
 
-# def label_encoding(X_train, X_test=None):
-#     old_shape = X_train.shape
-#     if X_test is None:
-#         data = X_train
-#     else:
-#         data = np.concatenate([X_train, X_test])
-#     categorical = []
-#     if len(data.shape) > 1:
-#         for column in range(data.shape[1]):
-#             try: 
-#                 float_col = data[:, column].astype(float)
-#                 data[:, column] = float_col
-#             except Exception:
-#                 categorical.append(column)
-#                 data[:, column] = preprocessing.LabelEncoder().fit_transform(data[:, column])
-#     else:
-#         data = preprocessing.LabelEncoder().fit_transform(data)
-#     if X_test is None:
-#         X_train = data
-#     else:
-#         X_train, X_test = np.split(data, [X_train.shape[0]])
-#     assert(X_train.shape == old_shape)
-#     return X_train, X_test, categorical
-    
-
-    # remove labels & rows that are only present in one split
-    # train_labels = set(list(y_train))
-    # test_labels = set(list(y_test))
-    # for label in train_labels:
-    #     if label not in test_labels:
-    #         where = np.where(y_train != label)[0]
-    #         X_train, y_train = X_train[where], y_train[where]
-    # for label in test_labels:
-    #     if label not in train_labels:
-    #         where = np.where(y_test != label)[0]
-    #         X_test, y_test = X_test[where], y_test[where]
-    # # use label encoding for categorical features and labels
-    # try:
-    #     X_train = X_train.astype(float)
-    #     X_test = X_test.astype(float)
-    #     categorical_columns = []
-    # except ValueError:
-    #     X_train, X_test, categorical_columns = label_encoding(X_train, X_test)
-    # try:
-    #     y_train = y_train.astype(int)
-    #     y_test = y_test.astype(int)
-    # except ValueError:
-    #     y_train, y_test, _ = label_encoding(y_train, y_test)
-    # # impute nan values
-    # imp = SimpleImputer(missing_values=np.nan, strategy='median')
-    # X_train = imp.fit_transform(X_train)
-    # X_test = imp.fit_transform(X_test)
-    # # identify the unique categorical values of each column
-    # cat_vals = [np.array(sorted(set(np.concatenate([np.unique(X_train[:, col]), np.unique(X_test[:, col])])))) for col in categorical_columns]
-    # # onehot encoding for categorical features, standard-scale all non-categoricals
-    # if not sparse.issparse(X_train):
-    #     scaler = ColumnTransformer([
-    #         ('categorical', preprocessing.OneHotEncoder(categories=cat_vals), categorical_columns)
-    #     ], remainder=preprocessing.StandardScaler())
-    #     X_train = scaler.fit_transform(X_train)
-    #     X_test = scaler.transform(X_test)
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-home", default=None)
-
+    parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
     args = parser.parse_args()
 
     size_ds = []
+    subsampleX2, subsampleX3, subsampleX5 = [], [], []
     for ds in DATASETS:
         X_train, X_test, y_train, y_test, feat = load_data(ds, args.data_home)
         tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
+        if X_train.shape[1] > 100:
+            subsampleX5.append(ds)
+        elif X_train.shape[1] > 60:
+            subsampleX3.append(ds)
+        elif X_train.shape[1] > 40:
+            subsampleX2.append(ds)
         print(f'{ds[:20]:<20} {tr_s + te_s:>6} ({tr_s / (tr_s + te_s) * 100:4.1f}% train) instances  {n_class:>4} classes  {len(feat):>7} feat - {str(feat)[:50]} ...')
         size_ds.append( (tr_s + te_s, ds) )
 
     print('Ordered by size:')
     print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) ]))
+
+    print('Subsamplable X2:')
+    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX2]))
+
+    print('Subsamplable X3:')
+    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX3]))
+
+    print('Subsamplable X5:')
+    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX5]))

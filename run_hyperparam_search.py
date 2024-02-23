@@ -27,8 +27,11 @@ def init_with_best_hyperparams(ds_name, method, n_jobs=-1, outdir='./hyperparame
             hyper_content = json.load(hyperf)
         best_rank = hyper_content['rank_test_score'].index(1)
         best_params = hyper_content['params'][best_rank]
-        best_params['n_jobs'] = n_jobs
         clf[1].set_params(**best_params)
+        try:
+            clf[1].set_params(**{'n_jobs': n_jobs})
+        except ValueError:
+            print('n_jobs cannot be set for method', method)
         sensitivity = np.std(hyper_content['mean_test_score'])
     except FileNotFoundError:
         print('  no hyperparameter search information found, using default hyperparameters instead')
@@ -36,16 +39,16 @@ def init_with_best_hyperparams(ds_name, method, n_jobs=-1, outdir='./hyperparame
     return clf, sensitivity
     
 
-def custom_hyperparam_search(method, X, y, outfile, n_iter=50, time_budget=10, random_state=0, cv=5, multiprocess=False):
+def custom_hyperparam_search(method, X, y, outfile, n_iter=50, time_budget=10, seed=0, cv=5, multiprocess=False):
     _, clf, cls_params, _ = CLSF[method]
     n_jobs = cv if multiprocess else None
     # the easy way, without time budget
     if time_budget < 0:
-        clf = RandomizedSearchCV(clf, cls_params, random_state=random_state, n_iter=n_iter, verbose=6, cv=cv, n_jobs=n_jobs)
+        clf = RandomizedSearchCV(clf, cls_params, random_state=seed, n_iter=n_iter, verbose=6, cv=cv, n_jobs=n_jobs)
         clf.fit(X, y) # run the search
         results = clf.cv_results_
     else: # use a custom search and stop after elapsed time budget
-        param_list = list(ParameterSampler(cls_params, n_iter=n_iter, random_state=random_state))
+        param_list = list(ParameterSampler(cls_params, n_iter=n_iter, random_state=seed))
         results = {'params': param_list, 'mean_test_score': [], 'std_test_score': []}
         t0 = time.time()
         for params in tqdm(param_list):
@@ -65,19 +68,20 @@ def custom_hyperparam_search(method, X, y, outfile, n_iter=50, time_budget=10, r
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-home", default=None)
+    parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
     parser.add_argument("--ds", default='kc2')
     parser.add_argument("--method", default='SVM')
+    parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     parser.add_argument("--multiprocess", default=True)
     args = parser.parse_args()
 
     all_ds = DATASETS if args.ds.lower() == 'all' else [args.ds]
 
     for ds in all_ds:
-        X_train, X_test, y_train, y_test, feat = load_data(ds, args.data_home)
+        X_train, X_test, y_train, y_test, feat = load_data(ds, args.data_home, seed=args.seed)
         outfile = hyperparam_fname(ds, args.method)
         print(f'Searching hyperparameters for {args.method:<5} on {ds}')
-        custom_hyperparam_search(args.method, X_train, y_train, outfile)
+        custom_hyperparam_search(args.method, X_train, y_train, outfile, seed=args.seed)
 
         # t0 = time.time()
         # custom_hyperparam_search(args.method, X_train, y_train, outfile)
