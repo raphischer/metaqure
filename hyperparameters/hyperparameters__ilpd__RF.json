@@ -1,237 +1,93 @@
 {
     "params": [
         {
-            "n_estimators": 10,
-            "max_features": 10,
+            "n_estimators": 40,
+            "max_features": 5,
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 150,
+            "max_features": 5,
             "max_depth": 5,
             "criterion": "gini"
         },
         {
             "n_estimators": 100,
             "max_features": "sqrt",
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 150,
-            "max_features": "sqrt",
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 40,
-            "max_features": "log2",
             "max_depth": 10,
             "criterion": "gini"
         },
         {
             "n_estimators": 20,
-            "max_features": "log2",
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 100,
-            "max_features": 10,
-            "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 20,
-            "max_features": "log2",
-            "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 100,
-            "max_features": "log2",
-            "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 75,
-            "max_features": 5,
-            "max_depth": 5,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 150,
-            "max_features": 20,
-            "max_depth": 10,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 75,
-            "max_features": "sqrt",
-            "max_depth": 5,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 40,
-            "max_features": 10,
-            "max_depth": 5,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 40,
-            "max_features": "sqrt",
-            "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 10,
-            "max_features": "sqrt",
-            "max_depth": 10,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 150,
-            "max_features": 20,
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 40,
-            "max_features": 5,
-            "max_depth": 10,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 10,
-            "max_features": "sqrt",
-            "max_depth": 5,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 20,
-            "max_features": 5,
-            "max_depth": 5,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 75,
-            "max_features": 10,
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 100,
-            "max_features": 5,
-            "max_depth": 10,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 75,
-            "max_features": "sqrt",
-            "max_depth": 10,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 150,
             "max_features": 20,
             "max_depth": 5,
             "criterion": "gini"
         },
         {
-            "n_estimators": 100,
-            "max_features": 5,
-            "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 10,
+            "n_estimators": 40,
             "max_features": 20,
             "max_depth": 10,
             "criterion": "gini"
         },
         {
-            "n_estimators": 40,
-            "max_features": 10,
-            "max_depth": 5,
+            "n_estimators": 100,
+            "max_features": "sqrt",
+            "max_depth": 10,
             "criterion": "entropy"
         },
         {
             "n_estimators": 20,
             "max_features": 5,
             "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 10,
-            "max_features": 20,
-            "max_depth": 5,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 75,
-            "max_features": "sqrt",
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 40,
-            "max_features": 20,
-            "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 40,
-            "max_features": "log2",
-            "max_depth": 10,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 75,
-            "max_features": 10,
-            "max_depth": 5,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 150,
-            "max_features": 10,
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 150,
-            "max_features": 5,
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 20,
-            "max_features": "sqrt",
-            "max_depth": 10,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 75,
-            "max_features": "sqrt",
-            "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 10,
-            "max_features": "log2",
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 10,
-            "max_features": "log2",
-            "max_depth": 10,
-            "criterion": "gini"
-        },
-        {
-            "n_estimators": 75,
-            "max_features": 5,
-            "max_depth": 10,
             "criterion": "entropy"
         },
         {
             "n_estimators": 100,
             "max_features": "log2",
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 100,
+            "max_features": "log2",
             "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 150,
+            "max_features": 5,
+            "max_depth": 5,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 10,
+            "max_features": 10,
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 40,
+            "max_features": "sqrt",
+            "max_depth": 10,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 150,
+            "max_features": "log2",
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 10,
+            "max_features": "log2",
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 150,
+            "max_features": 20,
+            "max_depth": 10,
             "criterion": "entropy"
         },
         {
@@ -241,31 +97,91 @@
             "criterion": "entropy"
         },
         {
+            "n_estimators": 20,
+            "max_features": 10,
+            "max_depth": 5,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 10,
+            "max_features": "sqrt",
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 100,
+            "max_features": 20,
+            "max_depth": 10,
+            "criterion": "entropy"
+        },
+        {
             "n_estimators": 40,
             "max_features": 5,
             "max_depth": 5,
             "criterion": "entropy"
         },
         {
-            "n_estimators": 10,
-            "max_features": 20,
-            "max_depth": 10,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 10,
+            "n_estimators": 150,
             "max_features": "sqrt",
-            "max_depth": 5,
-            "criterion": "entropy"
-        },
-        {
-            "n_estimators": 10,
-            "max_features": "log2",
             "max_depth": 10,
             "criterion": "entropy"
         },
         {
             "n_estimators": 75,
+            "max_features": 5,
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 20,
+            "max_features": "sqrt",
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 100,
+            "max_features": "log2",
+            "max_depth": 10,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 10,
+            "max_features": 5,
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 10,
+            "max_features": 5,
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 75,
+            "max_features": 5,
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 10,
+            "max_features": 20,
+            "max_depth": 5,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 100,
+            "max_features": 5,
+            "max_depth": 10,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 20,
+            "max_features": "log2",
+            "max_depth": 5,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 10,
             "max_features": 20,
             "max_depth": 10,
             "criterion": "gini"
@@ -274,187 +190,271 @@
             "n_estimators": 10,
             "max_features": 10,
             "max_depth": 10,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 100,
+            "max_features": 10,
+            "max_depth": 10,
             "criterion": "gini"
         },
         {
-            "n_estimators": 75,
+            "n_estimators": 10,
             "max_features": "log2",
             "max_depth": 5,
             "criterion": "entropy"
         },
         {
+            "n_estimators": 40,
+            "max_features": 20,
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 40,
+            "max_features": 10,
+            "max_depth": 5,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 10,
+            "max_features": "sqrt",
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
             "n_estimators": 150,
+            "max_features": 10,
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 100,
+            "max_features": 20,
+            "max_depth": 5,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 75,
             "max_features": "log2",
             "max_depth": 10,
             "criterion": "gini"
         },
         {
-            "n_estimators": 40,
+            "n_estimators": 75,
             "max_features": "sqrt",
+            "max_depth": 5,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 20,
+            "max_features": 20,
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 75,
+            "max_features": "log2",
+            "max_depth": 10,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 100,
+            "max_features": 20,
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 40,
+            "max_features": "log2",
+            "max_depth": 5,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 20,
+            "max_features": 20,
             "max_depth": 10,
             "criterion": "entropy"
         },
         {
             "n_estimators": 150,
+            "max_features": "sqrt",
+            "max_depth": 10,
+            "criterion": "gini"
+        },
+        {
+            "n_estimators": 10,
+            "max_features": "sqrt",
+            "max_depth": 5,
+            "criterion": "entropy"
+        },
+        {
+            "n_estimators": 40,
             "max_features": "log2",
             "max_depth": 10,
             "criterion": "entropy"
+        },
+        {
+            "n_estimators": 75,
+            "max_features": "log2",
+            "max_depth": 5,
+            "criterion": "gini"
         }
     ],
     "mean_test_score": [
-        0.6979362591431558,
-        0.6818443051201671,
-        0.695637408568443,
-        0.7254179728317659,
-        0.6749738766980147,
-        0.6932863113897596,
-        0.6544670846394983,
+        0.6890020898641589,
+        0.6843782654127482,
+        0.6843782654127482,
+        0.6752351097178684,
+        0.6773249738766981,
+        0.6843782654127482,
+        0.6909613375130617,
+        0.6637669801462905,
+        0.6798066875653083,
+        0.6935475444096133,
+        0.6865987460815047,
+        0.688871473354232,
+        0.7003396029258098,
+        0.6729101358411704,
+        0.6844043887147335,
+        0.679728317659352,
+        0.6798066875653083,
+        0.7050156739811912,
+        0.6842998955067922,
+        0.6936259143155695,
+        0.6889759665621735,
+        0.6865987460815047,
+        0.702612330198537,
         0.6751306165099268,
-        0.7025339602925811,
-        0.6773772204806687,
-        0.6888453500522466,
-        0.6910397074190178,
-        0.6772727272727272,
-        0.6887408568443051,
-        0.6888453500522467,
-        0.6864942528735632,
-        0.7048328108672937,
+        0.6979362591431558,
+        0.668234064785789,
+        0.6751306165099269,
+        0.6887147335423197,
+        0.6798850574712644,
         0.6956635318704285,
-        0.6818704284221525,
-        0.6659090909090909,
-        0.6795977011494253,
-        0.6797021943573668,
-        0.6842476489028213,
-        0.6681034482758621,
-        0.6864420062695924,
-        0.6521421107628005,
-        0.7001828631138975,
-        0.7025078369905955,
-        0.6659613375130615,
-        0.6911180773249739,
-        0.6819749216300941,
-        0.6888975966562174,
-        0.7048328108672937,
-        0.6726489028213167,
-        0.6887669801462903,
-        0.7001567398119123,
-        0.6911180773249738,
-        0.6751044932079415,
-        0.6933124346917451,
-        0.702533960292581,
+        0.6956635318704284,
+        0.6752351097178684,
         0.6705590386624869,
-        0.672805642633229,
-        0.6979101358411703,
-        0.6979885057471263,
-        0.6749738766980146,
-        0.6704022988505747,
-        0.7001567398119122,
-        0.6728578892371996,
-        0.6567920585161964,
-        0.668234064785789
+        0.6957680250783699,
+        0.6775862068965518,
+        0.6775600835945663,
+        0.6865726227795192,
+        0.6798066875653083,
+        0.6935214211076282,
+        0.6890020898641589,
+        0.6798850574712644,
+        0.6797283176593522,
+        0.695846394984326,
+        0.69119644723093,
+        0.6935475444096134,
+        0.6729885057471264,
+        0.6774817136886103,
+        0.6912486938349007,
+        0.7048850574712644,
+        0.691118077324974
     ],
     "std_test_score": [
-        0.011593449608293028,
-        0.020799857966527953,
-        0.01876598813276928,
-        0.03145080656796319,
-        0.0185561152875559,
-        0.0252481950190199,
-        0.013122533136120586,
-        0.01861391131565588,
-        0.015764195273045414,
-        0.012412280146624165,
-        0.023634645117950267,
-        0.030161679843269323,
-        0.03259382101025354,
-        0.035314994271331085,
-        0.027532572302272917,
-        0.013687812559016741,
-        0.04538816782304014,
-        0.013381659848344548,
-        0.024912592092875174,
-        0.02313179670171264,
-        0.01683889484794498,
-        0.017822985333568173,
-        0.019149217850736533,
-        0.03895806834095518,
-        0.024269602014315512,
-        0.026945701642465916,
-        0.0142647581580619,
-        0.028940869616013002,
-        0.026730099916056196,
-        0.02457123956973591,
-        0.02250509957749501,
-        0.03691365848424792,
-        0.012648211144554207,
-        0.0347638632372345,
-        0.03915763589791061,
-        0.02061269236714016,
-        0.03268978199760909,
-        0.017626474189066297,
-        0.032431319273602766,
-        0.01195054698788196,
-        0.018163567750953027,
-        0.0290903817407372,
-        0.03129070005145311,
-        0.03704321066620194,
-        0.021100869781027196,
-        0.023291615744257067,
-        0.014774014903689004,
-        0.020948803436016267,
-        0.016703517924781728,
-        0.025375530660035128
+        0.06005996536864111,
+        0.05403834702624592,
+        0.06390597991333856,
+        0.06544200515171467,
+        0.04510531354418227,
+        0.0504996333827189,
+        0.05351178440359012,
+        0.05552626899222884,
+        0.060613131501187155,
+        0.06201192101930926,
+        0.054875948995947166,
+        0.03933574261053591,
+        0.04479368616834829,
+        0.051639524218116614,
+        0.06497219702108739,
+        0.05424678365431903,
+        0.06277400658549846,
+        0.047992323835076414,
+        0.03937865741629714,
+        0.07509100328625246,
+        0.07581837361492141,
+        0.05042728431998093,
+        0.040928336886669865,
+        0.0746883158176377,
+        0.037485035941810047,
+        0.04727899090683188,
+        0.07250985409255793,
+        0.05443524499819724,
+        0.06635351615449199,
+        0.03804471279773829,
+        0.041891873114735835,
+        0.048205073695829374,
+        0.06592645756245755,
+        0.03850883075774436,
+        0.05434454314646374,
+        0.058744539735698154,
+        0.017219318713271276,
+        0.053699470293708404,
+        0.04881176549476796,
+        0.056472996301242716,
+        0.0626385033982101,
+        0.07111816483759788,
+        0.05811948014800663,
+        0.05211126672051027,
+        0.05433096688653487,
+        0.049510418531219035,
+        0.06398867494238969,
+        0.056141060686481635,
+        0.06097167490872315,
+        0.03440741348955198
     ],
     "rank_test_score": [
-        40,
-        21,
-        37,
-        50,
-        14,
-        35,
-        2,
-        16,
-        47,
-        18,
-        29,
         32,
-        17,
+        22,
+        22,
+        8,
+        10,
+        22,
+        34,
+        1,
+        16,
+        39,
         27,
         30,
-        26,
-        48,
-        38,
-        22,
+        47,
         4,
-        19,
-        20,
-        24,
-        6,
         25,
-        1,
-        44,
-        45,
-        5,
-        34,
-        23,
-        31,
-        48,
-        10,
-        28,
-        43,
-        33,
-        15,
-        36,
-        46,
-        9,
-        11,
-        39,
+        14,
+        16,
+        50,
+        21,
         41,
-        13,
-        8,
+        31,
+        27,
+        48,
+        6,
+        46,
+        2,
+        7,
+        29,
+        19,
+        43,
         42,
-        12,
+        8,
         3,
-        7
+        44,
+        13,
+        12,
+        26,
+        16,
+        38,
+        32,
+        19,
+        15,
+        45,
+        36,
+        40,
+        5,
+        11,
+        37,
+        49,
+        35
     ]
 }

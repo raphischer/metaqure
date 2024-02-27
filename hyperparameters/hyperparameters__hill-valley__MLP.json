@@ -1,110 +1,11 @@
 {
     "params": [
         {
-            "solver": "adam",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                50
-            ],
-            "alpha": 0.1
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
-                50
-            ],
-            "alpha": 0.001
-        },
-        {
             "solver": "sgd",
             "learning_rate_init": 0.0001,
             "hidden_layer_sizes": [
                 80,
                 50
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 1e-05,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.1,
-            "hidden_layer_sizes": [
-                80,
-                50
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
-                100,
-                50
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.1,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.1
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 1e-05,
-            "hidden_layer_sizes": [
-                100,
-                50
-            ],
-            "alpha": 0.1
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.1,
-            "hidden_layer_sizes": [
-                200
             ],
             "alpha": 0.001
         },
@@ -112,75 +13,7 @@
             "solver": "sgd",
             "learning_rate_init": 0.01,
             "hidden_layer_sizes": [
-                100,
-                50
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
-                50
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
                 200
-            ],
-            "alpha": 0.1
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.1,
-            "hidden_layer_sizes": [
-                100,
-                50
-            ],
-            "alpha": 0.001
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                80,
-                50
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                80,
-                50
             ],
             "alpha": 1e-05
         },
@@ -188,57 +21,32 @@
             "solver": "adam",
             "learning_rate_init": 0.01,
             "hidden_layer_sizes": [
-                100,
+                80,
                 50
             ],
-            "alpha": 0.1
+            "alpha": 0.0001
         },
         {
-            "solver": "adam",
+            "solver": "sgd",
             "learning_rate_init": 1e-05,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 0.0001
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.0001,
             "hidden_layer_sizes": [
                 100
             ],
             "alpha": 0.001
         },
         {
-            "solver": "sgd",
-            "learning_rate_init": 1e-05,
-            "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 1e-05,
-            "hidden_layer_sizes": [
-                80,
-                50
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.1,
-            "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 1e-05
-        },
-        {
             "solver": "adam",
-            "learning_rate_init": 0.001,
+            "learning_rate_init": 1e-05,
             "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                80,
+                100,
                 50
             ],
             "alpha": 0.01
@@ -247,14 +55,39 @@
             "solver": "adam",
             "learning_rate_init": 0.01,
             "hidden_layer_sizes": [
+                80,
+                50
+            ],
+            "alpha": 0.01
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
                 100,
                 50
+            ],
+            "alpha": 0.01
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.1,
+            "hidden_layer_sizes": [
+                200
             ],
             "alpha": 1e-05
         },
         {
             "solver": "sgd",
             "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                200
+            ],
+            "alpha": 0.001
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 1e-05,
             "hidden_layer_sizes": [
                 200
             ],
@@ -264,7 +97,132 @@
             "solver": "sgd",
             "learning_rate_init": 0.01,
             "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 0.1
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.01,
+            "hidden_layer_sizes": [
+                100,
                 50
+            ],
+            "alpha": 0.1
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 1e-05,
+            "hidden_layer_sizes": [
+                80,
+                50
+            ],
+            "alpha": 0.1
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.01,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 0.0001
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                50
+            ],
+            "alpha": 0.1
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                80,
+                50
+            ],
+            "alpha": 0.01
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 1e-05
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.01,
+            "hidden_layer_sizes": [
+                50
+            ],
+            "alpha": 0.01
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                50
+            ],
+            "alpha": 1e-05
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.01,
+            "hidden_layer_sizes": [
+                80,
+                50
+            ],
+            "alpha": 0.1
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.1,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 1e-05
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 0.001
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.1,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 0.0001
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.01,
+            "hidden_layer_sizes": [
+                50
+            ],
+            "alpha": 0.01
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                80,
+                50
+            ],
+            "alpha": 1e-05
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                200
             ],
             "alpha": 0.0001
         },
@@ -274,32 +232,7 @@
             "hidden_layer_sizes": [
                 100
             ],
-            "alpha": 0.001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
-                50
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                100,
-                50
-            ],
-            "alpha": 0.001
+            "alpha": 1e-05
         },
         {
             "solver": "sgd",
@@ -308,21 +241,71 @@
                 100,
                 50
             ],
+            "alpha": 1e-05
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 1e-05,
+            "hidden_layer_sizes": [
+                50
+            ],
             "alpha": 0.001
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 1e-05,
+            "hidden_layer_sizes": [
+                200
+            ],
+            "alpha": 0.1
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.0001,
+            "hidden_layer_sizes": [
+                100,
+                50
+            ],
+            "alpha": 1e-05
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 1e-05,
+            "hidden_layer_sizes": [
+                80,
+                50
+            ],
+            "alpha": 0.001
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.1,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 0.1
         },
         {
             "solver": "adam",
             "learning_rate_init": 0.001,
             "hidden_layer_sizes": [
-                200
+                50
             ],
             "alpha": 1e-05
         },
         {
-            "solver": "sgd",
-            "learning_rate_init": 0.0001,
+            "solver": "adam",
+            "learning_rate_init": 1e-05,
             "hidden_layer_sizes": [
-                50
+                100
+            ],
+            "alpha": 0.001
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.1,
+            "hidden_layer_sizes": [
+                100
             ],
             "alpha": 1e-05
         },
@@ -330,9 +313,27 @@
             "solver": "sgd",
             "learning_rate_init": 0.01,
             "hidden_layer_sizes": [
+                80,
                 50
             ],
-            "alpha": 0.001
+            "alpha": 0.01
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 1e-05,
+            "hidden_layer_sizes": [
+                100,
+                50
+            ],
+            "alpha": 0.01
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.1,
+            "hidden_layer_sizes": [
+                200
+            ],
+            "alpha": 0.01
         },
         {
             "solver": "sgd",
@@ -344,234 +345,235 @@
         },
         {
             "solver": "sgd",
-            "learning_rate_init": 0.0001,
+            "learning_rate_init": 0.01,
             "hidden_layer_sizes": [
-                100
+                80,
+                50
             ],
-            "alpha": 1e-05
+            "alpha": 0.0001
         },
         {
-            "solver": "adam",
-            "learning_rate_init": 0.01,
+            "solver": "sgd",
+            "learning_rate_init": 0.1,
             "hidden_layer_sizes": [
                 200
             ],
             "alpha": 0.001
         },
         {
+            "solver": "adam",
+            "learning_rate_init": 0.001,
+            "hidden_layer_sizes": [
+                100,
+                50
+            ],
+            "alpha": 0.01
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.0001,
+            "hidden_layer_sizes": [
+                50
+            ],
+            "alpha": 0.1
+        },
+        {
             "solver": "sgd",
             "learning_rate_init": 0.01,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 1e-05
+        },
+        {
+            "solver": "sgd",
+            "learning_rate_init": 0.01,
+            "hidden_layer_sizes": [
+                80,
+                50
+            ],
+            "alpha": 0.001
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.1,
+            "hidden_layer_sizes": [
+                100
+            ],
+            "alpha": 0.0001
+        },
+        {
+            "solver": "adam",
+            "learning_rate_init": 0.0001,
             "hidden_layer_sizes": [
                 50
             ],
             "alpha": 0.01
         },
         {
-            "solver": "adam",
+            "solver": "sgd",
             "learning_rate_init": 0.1,
             "hidden_layer_sizes": [
                 100,
                 50
             ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                80,
-                50
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                80,
-                50
-            ],
             "alpha": 1e-05
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.1,
-            "hidden_layer_sizes": [
-                50
-            ],
-            "alpha": 0.01
         }
     ],
     "mean_test_score": [
-        0.5082326513265739,
-        0.49834254143646406,
-        0.5104486673547447,
-        0.540112925748285,
-        0.5093679800862121,
-        0.5016513872867464,
-        0.5060530629591403,
-        0.48840993260882765,
         0.5093497662558436,
-        0.5643373201384251,
-        0.5093497662558436,
-        0.5038552607613381,
-        0.5093497662558436,
-        0.5093497662558436,
-        0.5049541618602392,
         0.5005585574646348,
-        0.5170542165017304,
-        0.5137514419282374,
-        0.5214255357901766,
-        0.5060348491287717,
-        0.5115293546232772,
-        0.5490073462449153,
-        0.5225790783801834,
-        0.5369194341570033,
-        0.5060409204055613,
-        0.5038370469309695,
-        0.5104486673547447,
-        0.6007285532147411,
-        0.5049541618602392,
-        0.5655940744338535,
-        0.5071701778884099,
-        0.5038370469309695,
-        0.4994535850889442,
-        0.5225912209337624,
-        0.5005403436342662,
+        0.5214376783437558,
+        0.5060469916823508,
+        0.5038431182077591,
+        0.5280128711067937,
+        0.5422743002853501,
+        0.5038431182077591,
         0.5093497662558436,
-        0.5192398761459535,
-        0.5985732499544654,
-        0.5060348491287717,
-        0.5016392447331673,
-        0.5071458927812519,
-        0.4928480359419586,
-        0.5522433367737234,
-        0.49836075526683266,
-        0.5082508651569425,
-        0.5391050938012263,
-        0.5049541618602392,
-        0.5071337502276728,
+        0.5016574585635359,
+        0.5148442717503492,
+        0.5148746281342966,
         0.5060530629591403,
-        0.5104486673547447
+        0.5071337502276728,
+        0.6269503976686297,
+        0.5038431182077591,
+        0.5060530629591403,
+        0.5457592131625281,
+        0.5842146803472771,
+        0.5016574585635359,
+        0.5346609191913059,
+        0.5115536397304352,
+        0.5016574585635359,
+        0.5093497662558436,
+        0.49726185416793156,
+        0.5719992714467852,
+        0.5610041891809848,
+        0.497231497783984,
+        0.5170420739481513,
+        0.4994535850889442,
+        0.5060530629591403,
+        0.5071094651205148,
+        0.46970432882035096,
+        0.5104486673547447,
+        0.47187177463420565,
+        0.49944144253536515,
+        0.5082508651569425,
+        0.5104486673547447,
+        0.5115475684536458,
+        0.5016574585635359,
+        0.5038431182077591,
+        0.5093497662558436,
+        0.5115475684536458,
+        0.4994475138121547,
+        0.4950458381397608,
+        0.5093497662558436,
+        0.5104486673547447,
+        0.5016574585635359,
+        0.49286017849553765,
+        0.5093497662558436
     ],
     "std_test_score": [
-        0.030299572849182495,
-        0.006871403372989762,
-        0.0036391923862347454,
-        0.04961890979919803,
-        0.02169317068127299,
-        0.012237118864901465,
+        0.0021933196406528693,
+        0.009587324634312026,
+        0.015571912471610735,
+        0.018583566354703887,
+        0.003302774573492795,
+        0.05545420401517993,
+        0.04942630349606372,
+        0.009130352533898836,
+        0.0021933196406528693,
+        0.012960499482309313,
+        0.009761114021590526,
+        0.010731589265306665,
+        0.008585042997863177,
+        0.015895456022971464,
+        0.0679310952015204,
+        0.009130352533898836,
+        0.008585042997863177,
+        0.07979952720524522,
+        0.07740450857900928,
+        0.010372818593450744,
+        0.021687756447503342,
+        0.0011292574828486667,
+        0.010372818593450744,
+        0.0021933196406528693,
+        0.010141256917404378,
+        0.1227091499987112,
+        0.033418392179690816,
+        0.011020921041979477,
+        0.039020547939417,
+        0.01233594701794434,
         0.009261684486464672,
-        0.02467061960049966,
-        0.012719926191517766,
-        0.0406371495580624,
-        0.0021933196406528693,
-        0.007697531433490968,
-        0.008790089223440014,
-        0.0021933196406528693,
-        0.008930895621335937,
-        0.017239663857567342,
-        0.025084781823438294,
-        0.004256133913252407,
-        0.01706383510954099,
-        0.007470567319685136,
-        0.015198982785636004,
-        0.024433005414607394,
-        0.01881256802306946,
-        0.04381129161528994,
-        0.013050773995081665,
-        0.03717117385977808,
+        0.02930318205237288,
+        0.03535069925497856,
         0.001080687268532543,
-        0.08265431494077612,
-        0.008227093067878628,
-        0.0753306335516088,
-        0.01251966464618419,
-        0.012245851070647764,
-        0.02268150516123971,
-        0.063743142564661,
-        0.013949244315768751,
+        0.05157846970168455,
+        0.011841458468040501,
+        0.0024572850606811706,
+        0.001080687268532543,
+        0.00744910282561822,
+        0.01093943334109668,
+        0.009130352533898836,
         0.0021933196406528693,
-        0.020700057166478804,
-        0.0748033766877368,
-        0.008942094194385826,
-        0.009462645337841214,
-        0.003292658888490146,
-        0.009454180831997597,
-        0.05808789689788354,
-        0.009462645337841233,
-        0.004256064628398775,
-        0.028406597738955812,
-        0.014580641116475708,
-        0.008457421498501394,
-        0.006121719898866507,
-        0.001080687268532543
+        0.002680631996375392,
+        0.06380264712972814,
+        0.008227093067878617,
+        0.0021933196406528693,
+        0.001080687268532543,
+        0.01734383883686665,
+        0.03828924918833745,
+        0.0021933196406528693
     ],
     "rank_test_score": [
-        24,
-        3,
-        32,
-        44,
-        31,
-        9,
-        19,
-        1,
-        26,
-        47,
-        26,
-        12,
-        26,
-        26,
-        13,
-        7,
-        37,
-        36,
-        39,
-        16,
-        35,
-        45,
-        40,
+        27,
+        10,
         42,
-        18,
-        10,
-        32,
+        20,
+        16,
+        43,
+        45,
+        16,
+        27,
+        11,
+        39,
+        40,
+        21,
+        25,
         50,
-        13,
+        16,
+        21,
+        46,
+        49,
+        11,
+        44,
+        38,
+        11,
+        27,
+        6,
         48,
-        23,
-        10,
+        47,
         5,
         41,
-        6,
-        26,
-        38,
-        49,
-        16,
-        8,
-        22,
-        2,
-        46,
-        4,
-        25,
-        43,
-        13,
+        9,
         21,
-        19,
-        32
+        24,
+        1,
+        33,
+        2,
+        7,
+        26,
+        33,
+        36,
+        11,
+        16,
+        27,
+        36,
+        8,
+        4,
+        27,
+        33,
+        11,
+        3,
+        27
     ]
 }

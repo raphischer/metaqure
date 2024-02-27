@@ -1,23 +1,18 @@
 {
     "params": [
         {
-            "n_estimators": 40,
+            "n_estimators": 75,
             "learning_rate": 1.0,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 150,
-            "learning_rate": 2.0,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 20,
-            "learning_rate": 0.01,
             "algorithm": "SAMME.R"
         },
         {
-            "n_estimators": 20,
-            "learning_rate": 0.05,
+            "n_estimators": 10,
+            "learning_rate": 0.01,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 40,
+            "learning_rate": 0.1,
             "algorithm": "SAMME.R"
         },
         {
@@ -28,152 +23,22 @@
         {
             "n_estimators": 150,
             "learning_rate": 0.05,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 40,
-            "learning_rate": 0.01,
             "algorithm": "SAMME"
         },
         {
             "n_estimators": 10,
-            "learning_rate": 0.1,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 150,
-            "learning_rate": 0.5,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 20,
-            "learning_rate": 0.05,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 0.5,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 0.05,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 75,
-            "learning_rate": 0.5,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 10,
-            "learning_rate": 2.0,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 40,
-            "learning_rate": 0.1,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 0.5,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 150,
             "learning_rate": 1.0,
             "algorithm": "SAMME.R"
         },
         {
             "n_estimators": 75,
-            "learning_rate": 1.0,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 0.01,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 100,
-            "learning_rate": 1.0,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 2.0,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 150,
-            "learning_rate": 0.1,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 2.0,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 10,
-            "learning_rate": 0.5,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 0.05,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 75,
-            "learning_rate": 0.01,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 40,
-            "learning_rate": 1.0,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 0.01,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 75,
-            "learning_rate": 0.01,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 150,
-            "learning_rate": 0.5,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 75,
-            "learning_rate": 0.1,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 10,
             "learning_rate": 0.05,
             "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 150,
-            "learning_rate": 1.0,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 75,
-            "learning_rate": 0.05,
-            "algorithm": "SAMME.R"
         },
         {
             "n_estimators": 100,
             "learning_rate": 0.1,
-            "algorithm": "SAMME.R"
+            "algorithm": "SAMME"
         },
         {
             "n_estimators": 100,
@@ -181,8 +46,178 @@
             "algorithm": "SAMME"
         },
         {
-            "n_estimators": 20,
+            "n_estimators": 40,
+            "learning_rate": 0.5,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 150,
+            "learning_rate": 2.0,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 150,
+            "learning_rate": 0.01,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 10,
+            "learning_rate": 2.0,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 100,
+            "learning_rate": 2.0,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 200,
+            "learning_rate": 0.05,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 150,
+            "learning_rate": 0.05,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 150,
+            "learning_rate": 1.0,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 200,
+            "learning_rate": 1.0,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 10,
+            "learning_rate": 0.01,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 10,
+            "learning_rate": 0.05,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 100,
+            "learning_rate": 0.05,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 40,
+            "learning_rate": 1.0,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 100,
+            "learning_rate": 2.0,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 10,
+            "learning_rate": 1.0,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 40,
+            "learning_rate": 0.05,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 150,
+            "learning_rate": 0.5,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 150,
+            "learning_rate": 0.01,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 75,
+            "learning_rate": 0.01,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 75,
+            "learning_rate": 1.0,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 200,
+            "learning_rate": 1.0,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 40,
+            "learning_rate": 0.01,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 200,
+            "learning_rate": 2.0,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 40,
             "learning_rate": 0.1,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 20,
+            "learning_rate": 0.5,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 10,
+            "learning_rate": 0.05,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 100,
+            "learning_rate": 0.5,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 10,
+            "learning_rate": 0.1,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 150,
+            "learning_rate": 0.1,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 200,
+            "learning_rate": 0.5,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 100,
+            "learning_rate": 0.5,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 100,
+            "learning_rate": 0.05,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 200,
+            "learning_rate": 0.05,
+            "algorithm": "SAMME"
+        },
+        {
+            "n_estimators": 200,
+            "learning_rate": 0.1,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 75,
+            "learning_rate": 0.01,
             "algorithm": "SAMME"
         },
         {
@@ -196,215 +231,180 @@
             "algorithm": "SAMME"
         },
         {
-            "n_estimators": 150,
-            "learning_rate": 0.01,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 1.0,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 10,
-            "learning_rate": 0.01,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 10,
-            "learning_rate": 0.01,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 200,
-            "learning_rate": 1.0,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 10,
-            "learning_rate": 1.0,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 100,
+            "n_estimators": 20,
             "learning_rate": 0.05,
             "algorithm": "SAMME"
         },
         {
-            "n_estimators": 200,
-            "learning_rate": 0.1,
-            "algorithm": "SAMME.R"
-        },
-        {
-            "n_estimators": 40,
+            "n_estimators": 75,
             "learning_rate": 0.5,
+            "algorithm": "SAMME.R"
+        },
+        {
+            "n_estimators": 200,
+            "learning_rate": 0.01,
             "algorithm": "SAMME"
         },
         {
-            "n_estimators": 75,
-            "learning_rate": 0.05,
-            "algorithm": "SAMME"
-        },
-        {
-            "n_estimators": 75,
-            "learning_rate": 1.0,
+            "n_estimators": 20,
+            "learning_rate": 2.0,
             "algorithm": "SAMME"
         }
     ],
     "mean_test_score": [
-        0.8159039272963323,
-        0.5543005517689062,
-        0.8159039272963324,
-        0.8337877312560857,
-        0.8287244401168452,
-        0.8210645894190197,
-        0.8133073677377475,
-        0.8286595261278806,
-        0.8184680298604349,
-        0.8235313209996754,
-        0.8081791626095424,
-        0.8362869198312236,
-        0.8056799740344044,
-        0.31583901330736774,
-        0.8286919831223629,
-        0.8210321324245374,
-        0.8081791626095424,
-        0.7979876663420967,
-        0.8261603375527427,
-        0.8184355728659526,
-        0.4415774099318403,
-        0.82359623498864,
-        0.5543005517689062,
-        0.8210645894190197,
-        0.8236286919831223,
-        0.8287244401168452,
-        0.8056799740344044,
-        0.8312560856864655,
-        0.8133398247322299,
-        0.8056475170399221,
-        0.8184680298604349,
-        0.8184355728659526,
-        0.8158065563128855,
-        0.82359623498864,
-        0.82359623498864,
-        0.8133398247322299,
-        0.8235313209996754,
-        0.8362869198312236,
-        0.8132749107432652,
-        0.8235313209996754,
-        0.8132749107432652,
-        0.8158390133073677,
-        0.8158390133073677,
+        0.833722817267121,
+        0.8132099967543006,
+        0.841447581953911,
+        0.8285946121389159,
+        0.8337552742616035,
+        0.8106458941901981,
+        0.8337552742616033,
+        0.8337552742616035,
+        0.7901979876663421,
+        0.8285296981499514,
+        0.5218111002921129,
+        0.8337552742616033,
+        0.4813047711781889,
+        0.27377474845829275,
+        0.8439792275235313,
+        0.8440116845180137,
+        0.8183057448880234,
+        0.8209023044466083,
+        0.8132099967543006,
+        0.8081142486205778,
+        0.8414475819539111,
+        0.8234339500162285,
+        0.5218111002921129,
+        0.7978253813696853,
+        0.818370658876988,
+        0.8209023044466083,
+        0.7901655306718598,
         0.8106783511846803,
-        0.7979876663420967,
-        0.8388185654008439,
-        0.8210321324245374,
-        0.8287244401168452,
-        0.8261603375527427,
-        0.8055501460564752
+        0.8234339500162285,
+        0.8234664070107108,
+        0.8157740993184032,
+        0.27890295358649786,
+        0.8363193768257059,
+        0.8284972411554691,
+        0.8107108081791626,
+        0.8234664070107108,
+        0.8311911716975008,
+        0.8414475819539111,
+        0.8209347614410906,
+        0.833722817267121,
+        0.8491398896462188,
+        0.8337552742616035,
+        0.8285621551444337,
+        0.7927620902304446,
+        0.8363193768257059,
+        0.8082116196040247,
+        0.7876338851022395,
+        0.8234664070107108,
+        0.8106783511846803,
+        0.5142161635832522
     ],
     "std_test_score": [
-        0.023349328124607268,
-        0.3013337258509662,
-        0.016798995371779916,
-        0.007410863694108662,
-        0.016397882651643082,
-        0.018794982076136852,
-        0.01005726992891364,
-        0.0057691337626300295,
-        0.02439518316257679,
-        0.022023117152543733,
-        0.026910156565093588,
-        0.005907172995780562,
-        0.030372637366952046,
-        0.2539102276776014,
-        0.009282700421940949,
-        0.028794933826272427,
-        0.014077882284593174,
-        0.0144144870706984,
-        0.014345991561181437,
-        0.020291307220085958,
-        0.2810404466090501,
-        0.025603611173239473,
-        0.3013337258509662,
-        0.031791721362109955,
-        0.02395743963202284,
-        0.016397882651643082,
-        0.01991299434754568,
-        0.011673423273151134,
-        0.020404946035082635,
-        0.02720171117346188,
-        0.014165014789312057,
-        0.01464576696260029,
-        0.022705285792407794,
-        0.013975742125691193,
-        0.021408088339067363,
-        0.020404946035082635,
-        0.022023117152543733,
-        0.005907172995780562,
-        0.01761389387065898,
-        0.022023117152543733,
-        0.015636592905568184,
-        0.010520473028909549,
-        0.017547621249876962,
-        0.025262636391427857,
-        0.0144144870706984,
-        0.010970464135021098,
-        0.02379418701468733,
-        0.016397882651643082,
-        0.014345991561181437,
-        0.03220257310004966
+        0.0315719314004914,
+        0.05903239396368241,
+        0.04253018220559185,
+        0.0518062233803556,
+        0.038041148347809015,
+        0.04987462634231892,
+        0.05439937516410095,
+        0.03141505101815687,
+        0.037190872302006496,
+        0.04660519265759187,
+        0.23921662804447308,
+        0.04932871639831725,
+        0.2570357163564286,
+        0.02485387862135237,
+        0.02742464307513181,
+        0.029547525794844227,
+        0.06273061321894913,
+        0.04237603396967245,
+        0.05903239396368241,
+        0.058098255844047354,
+        0.0476344406452669,
+        0.041183692815513685,
+        0.23921662804447308,
+        0.0573273037515932,
+        0.051030343780149444,
+        0.04079504646172237,
+        0.043793134286966684,
+        0.06159561135242851,
+        0.0554686142369037,
+        0.05772514564688225,
+        0.056743645505089896,
+        0.027240604587839088,
+        0.05639738792910996,
+        0.05070603247176418,
+        0.05472682397520779,
+        0.03687554544928884,
+        0.05092422790931118,
+        0.040144460883959114,
+        0.04226912660255299,
+        0.04808025836250056,
+        0.03460433179956728,
+        0.03141505101815687,
+        0.04049491034051793,
+        0.04038151026494016,
+        0.04242634504393084,
+        0.049197288282184795,
+        0.04140316807085811,
+        0.03687554544928884,
+        0.06159561135242851,
+        0.2405883905746603
     ],
     "rank_test_score": [
-        22,
-        3,
-        23,
-        47,
-        43,
-        30,
-        16,
-        41,
-        26,
-        32,
-        11,
-        48,
-        9,
-        1,
-        42,
-        28,
-        11,
-        5,
-        39,
-        24,
-        2,
-        35,
-        3,
-        30,
+        36,
+        18,
+        45,
+        34,
+        40,
+        14,
         38,
-        43,
+        40,
         9,
-        46,
-        17,
-        8,
-        26,
-        24,
-        19,
-        35,
-        35,
-        17,
         32,
-        48,
-        14,
-        32,
-        14,
-        20,
-        20,
-        13,
         5,
-        50,
+        38,
+        3,
+        1,
+        48,
+        49,
+        21,
+        23,
+        18,
+        12,
+        46,
+        26,
+        5,
+        11,
+        22,
+        23,
+        8,
+        15,
+        26,
         28,
+        20,
+        2,
         43,
-        39,
-        7
+        31,
+        17,
+        28,
+        35,
+        46,
+        25,
+        36,
+        50,
+        40,
+        33,
+        10,
+        43,
+        13,
+        7,
+        28,
+        15,
+        4
     ]
 }

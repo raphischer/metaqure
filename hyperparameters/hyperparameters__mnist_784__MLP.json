@@ -349,97 +349,30 @@
                 100
             ],
             "alpha": 1e-05
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                200
-            ],
-            "alpha": 0.001
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                50
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.1,
-            "hidden_layer_sizes": [
-                100,
-                50
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.01,
-            "hidden_layer_sizes": [
-                80,
-                50
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.0001,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.01
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                80,
-                50
-            ],
-            "alpha": 1e-05
-        },
-        {
-            "solver": "sgd",
-            "learning_rate_init": 0.001,
-            "hidden_layer_sizes": [
-                100
-            ],
-            "alpha": 0.0001
-        },
-        {
-            "solver": "adam",
-            "learning_rate_init": 0.1,
-            "hidden_layer_sizes": [
-                50
-            ],
-            "alpha": 0.01
         }
     ],
     "mean_test_score": [
-        0.9436,
-        0.9181333333333332,
-        0.9288380952380951,
-        0.9087619047619047,
-        0.9339047619047619,
-        0.917142857142857
+        0.9466285714285714,
+        0.9171809523809523,
+        0.930952380952381,
+        0.9154285714285715,
+        0.9348380952380954,
+        0.9154095238095238
     ],
     "std_test_score": [
-        0.0033425179586435818,
-        0.006194606680608338,
-        0.002386203732703504,
-        0.004551544055370867,
-        0.009328472981322564,
-        0.0020247896786161393
+        0.0028562538299393247,
+        0.006025072331403115,
+        0.002794877075737086,
+        0.00597287899146735,
+        0.00655813700663022,
+        0.002388483327911198
     ],
     "rank_test_score": [
         6,
         3,
         4,
-        1,
+        2,
         5,
-        2
+        1
     ]
 }

@@ -71,17 +71,27 @@ if __name__ == "__main__":
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
     parser.add_argument("--ds", default='kc2')
     parser.add_argument("--method", default='SVM')
+    parser.add_argument("--subsample", type=int, default=None)
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     parser.add_argument("--multiprocess", default=True)
     args = parser.parse_args()
 
-    all_ds = DATASETS if args.ds.lower() == 'all' else [args.ds]
+    to_process = []
 
-    for ds in all_ds:
-        X_train, X_test, y_train, y_test, feat = load_data(ds, args.data_home, seed=args.seed)
-        outfile = hyperparam_fname(ds, args.method)
-        print(f'Searching hyperparameters for {args.method:<5} on {ds}')
-        custom_hyperparam_search(args.method, X_train, y_train, outfile, seed=args.seed)
+    if args.subsample is not None and args.subsample > 1:
+        subsample = args.subsample
+        for n in range(args.subsample):
+            X_train, _, y_train, _, _ = load_data(args.ds, args.data_home, seed=args.seed, subsample=(subsample, n) )
+            outfile = hyperparam_fname(f'v{n}___{args.ds}', args.method)
+            to_process.append( (args.method, X_train, y_train, outfile, args.seed) )
+    else:
+        X_train, _, y_train, _, _ = load_data(args.ds, args.data_home, seed=args.seed)
+        outfile = hyperparam_fname(args.ds, args.method)
+        to_process.append( (args.method, X_train, y_train, outfile, args.seed) )
+    
+    for method, X_train, y_train, outfile, seed in to_process:
+        print(f'Searching hyperparameters for {outfile}')
+        custom_hyperparam_search(method, X_train, y_train, outfile, seed)
 
         # t0 = time.time()
         # custom_hyperparam_search(args.method, X_train, y_train, outfile)

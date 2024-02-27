@@ -7,3 +7,27 @@ do
         timeout 7200s python run_hyperparam_search.py --ds $d --method $m --data-home $1
     done
 done
+
+for d in "lung_cancer" "connectionist_bench_sonar,_mines_vs._rocks" "student_performance" "credit_approval" "qsar-biodeg" "spambase" "bank-marketing" "covtype"
+do
+    for m in "kNN" "SVM" "RF" "XRF" "AB" "GNB" "RR" "LR" "SGD" "MLP"
+    do
+        timeout 7200s python run_hyperparam_search.py --ds $d --method $m --data-home $1 --subsample 2
+    done
+done
+
+for d in "credit-g" "hill-valley" "one-hundred-plants-texture" "one-hundred-plants-shape" "ozone-level-8hr" "kr-vs-kp" "optical_recognition_of_handwritten_digits" "support2"
+do
+    for m in "kNN" "SVM" "RF" "XRF" "AB" "GNB" "RR" "LR" "SGD" "MLP"
+    do
+        timeout 7200s python run_hyperparam_search.py --ds $d --method $m --data-home $1 --subsample 3
+    done
+done
+
+for d in "olivetti_faces" "cirrhosis_patient_survival_prediction" "arrhythmia" "regensburg_pediatric_appendicitis" "amazon-commerce-reviews" "myocardial_infarction_complications" "Bioresponse" "isolet" "mushroom" "SpeedDating" "20newsgroups_vectorized" "adult" "mnist_784" "diabetes_130-us_hospitals_for_years_1999-2008"
+do
+    for m in "kNN" "SVM" "RF" "XRF" "AB" "GNB" "RR" "LR" "SGD" "MLP"
+    do
+        timeout 7200s python run_hyperparam_search.py --ds $d --method $m --data-home $1 --subsample 5
+    done
+done
