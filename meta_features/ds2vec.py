@@ -553,34 +553,32 @@ def Dataset2VecModel(configuration):
 class CustomDataset(Dataset):
 
     def __init__(self, data, targets):
-            self.ninstanc = 256
-            self.nclasses = 3
-            self.nfeature = 16
-            self.X,self.y = data, targets
+        self.ninstanc = 256
+        self.nclasses = 3
+        self.nfeature = 16
+        self.X,self.y = data, targets # simple store the arrays instead of loading them with __get_data
                       
-
 def extract(data, targets, n_samples=10, d2v_model_root='ds2vec_models'):
     dataset = CustomDataset(data, targets)
     testsampler = TestSampling(dataset=dataset)
     metafeatures = []
     d2v_model_root = os.path.join(os.path.dirname(__file__), d2v_model_root)
-
     try:
         for subdir in os.listdir(d2v_model_root):
-            # load model
+            # load model from this split
             log_dir = os.path.join(d2v_model_root, subdir)
             configuration = json.load(open(os.path.join(log_dir, "configuration.txt"),"r"))
             batch = Batch(configuration['batch_size'])
             model = Dataset2VecModel(configuration)
             model.load_weights(os.path.join(log_dir, "weights"), by_name=False, skip_mismatch=False)
-            # calculate features
+            # calculate features by sampling from the dataset
             datasetmf = []
             for _ in range(n_samples): # any number of samples
                 batch = testsampler.sample_from_one_dataset(batch)
                 batch.collect()
                 datasetmf.append(model(batch.input).numpy())
             metafeatures.append(np.vstack(datasetmf).mean(axis=0))
-
+        # average the features of all CV split models
         metafeatures = np.array(metafeatures).mean(axis=0)
     except:
         metafeatures = np.full((32,), fill_value=np.nan)

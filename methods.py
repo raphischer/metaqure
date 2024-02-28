@@ -11,8 +11,6 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTr
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 
-from scipy.stats import uniform
-
 from data_loading import DATASETS, load_data
 
 CLSF = {

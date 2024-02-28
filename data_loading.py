@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 
 def warn(*args, **kwargs):
     pass
@@ -9,7 +10,8 @@ warnings.warn = warn
 import numpy as np
 import pandas as pd
 
-from sklearn import datasets, preprocessing
+from sklearn import preprocessing
+from sklearn import datasets as sk_datasets
 from sklearn.model_selection import train_test_split, KFold
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
@@ -34,7 +36,7 @@ UCI_MAP = {'abalone': 1, 'adult': 2, 'auto_mpg': 9, 'automobile': 10, 'balance_s
            'congressional_voting_records': 105, 'wine': 109, 'yeast': 110, 'zoo': 111,
            'statlog_australian_credit_approval': 143, 'statlog_german_credit_data': 144, 'statlog_heart': 145,
            'statlog_landsat_satellite': 146, 'statlog_shuttle': 148, 'statlog_vehicle_silhouettes': 149,
-           'connectionist_bench_sonar,_mines_vs._rocks': 151, 'magic_gamma_telescope': 159, 'forest_fires': 162,
+           'connectionist_bench_sonar_mines_vs_rocks': 151, 'magic_gamma_telescope': 159, 'forest_fires': 162,
            'concrete_compressive_strength': 165, 'parkinsons': 174, 'wine_quality': 186, 'parkinsons_telemonitoring': 189,
            'bank_marketing': 222, 'ilpd_indian_liver_patient_dataset': 225,
            'individual_household_electric_power_consumption': 235, 'energy_efficiency': 242, 'banknote_authentication': 267,
@@ -153,7 +155,7 @@ UCI_DATASETS = [
     'statlog_landsat_satellite',
     'statlog_shuttle',
     'statlog_vehicle_silhouettes',
-    'connectionist_bench_sonar,_mines_vs._rocks',
+    'connectionist_bench_sonar_mines_vs_rocks',
     'magic_gamma_telescope',
     'parkinsons',
     'wine_quality',
@@ -195,16 +197,32 @@ UCI_DATASETS = [
 
 DATASETS = UCI_DATASETS + SKLEARN_DATASETS + OPENML_DATASETS
 
+SUBSAMPLE = {
+    2: ["lung_cancer", "connectionist_bench_sonar_mines_vs_rocks", "student_performance", "credit_approval", "qsar-biodeg", "spambase", "bank-marketing", "covtype"],
+    3: ["credit-g", "hill-valley", "one-hundred-plants-texture", "one-hundred-plants-shape", "ozone-level-8hr", "kr-vs-kp", "optical_recognition_of_handwritten_digits", "support2"],
+    5: ["olivetti_faces", "cirrhosis_patient_survival_prediction", "arrhythmia", "regensburg_pediatric_appendicitis", "amazon-commerce-reviews", "myocardial_infarction_complications", "Bioresponse", "isolet", "mushroom", "SpeedDating", "20newsgroups_vectorized", "adult", "mnist_784", "diabetes_130-us_hospitals_for_years_1999-2008"]
+}
+
+ALL_DS = []
+for ds in DATASETS:
+    ALL_DS.append((ds, None))
+for subsample, subds in SUBSAMPLE.items():
+    for ds in subds:
+        ALL_DS.append((ds, subsample))
+
 
 def load_sklearn_feature_names(ds):
     if hasattr(ds, 'feature_names'):
-        return ds.feature_names
+        feat = ds.feature_names
     else:
-        return [f'feat_{idx}' for idx in range(ds.data.shape[1])]
+        feat = np.array([f'feat_{idx}' for idx in range(ds.data.shape[1])])
+    if not isinstance(feat, np.ndarray):
+        return np.array(feat)
+    return feat
     
 
 def load_sklearn(ds_name, data_home=None):
-    ds_loader = getattr(datasets, f'fetch_{ds_name}') if hasattr(datasets, f'fetch_{ds_name}') else getattr(datasets, f'load_{ds_name}')
+    ds_loader = getattr(sk_datasets, f'fetch_{ds_name}') if hasattr(sk_datasets, f'fetch_{ds_name}') else getattr(sk_datasets, f'load_{ds_name}')
     try:
         # some datasets come with prepared split
         ds_train = ds_loader(subset='train', data_home=data_home)
@@ -225,7 +243,7 @@ def load_sklearn(ds_name, data_home=None):
 
 
 def load_openml(ds_name, data_home=None):
-    data = datasets.fetch_openml(name=ds_name, data_home=data_home, parser='auto')
+    data = sk_datasets.fetch_openml(name=ds_name, data_home=data_home, parser='auto')
     X = pd.get_dummies(data['data']).astype(float) # one-hot
     X, feature_names = X.values, X.columns.values
     y, cat = pd.factorize(data['target'])
@@ -253,6 +271,18 @@ def load_uci(ds_name, data_home=None):
     return X_train, X_test, y_train, y_test, feature_names
 
 
+def subsample_to_ds_name(subsample, ds_name):
+    return f'v{subsample[1]}_{subsample[0]}___{ds_name}'
+
+
+def ds_name_to_subsample(ds_name):
+    try:
+        iter, n_var, ds_orig = re.match(r'v(\d)_(\d)___(.*)', ds_name).groups()
+        return (int(iter), int(n_var)), ds_orig
+    except AttributeError: # unsuccessful match
+        return None, ds_name
+
+
 def load_data(ds_name, data_home=None, seed=0, subsample=None):
     with fixedseed(np, seed=seed):
         if ds_name in SKLEARN_DATASETS:
@@ -271,11 +301,18 @@ def load_data(ds_name, data_home=None, seed=0, subsample=None):
         if subsample is not None:
             kf = [idc[1] for idc in KFold(n_splits=subsample[0], random_state=seed, shuffle=True).split(np.arange(len(feature_names)))]
             idc = kf[subsample[1]]
-            print(f'split {subsample[1]} {idc}')
             X_train = X_train[:,idc]
             X_test = X_test[:,idc]
             feature_names = feature_names[idc]
-    return X_train, X_test, y_train, y_test, list(feature_names)
+            ds_name = subsample_to_ds_name(subsample, ds_name)
+    return X_train, X_test, y_train, y_test, list(feature_names), ds_name
+
+
+def data_variant_loaders(ds_name, data_home=None, seed=0, subsample=None):
+    if subsample is None:
+        return [lambda: load_data(ds_name, data_home, seed, subsample)]
+    assert subsample > 1 and isinstance(subsample, int)
+    return [lambda n=n: load_data(ds_name, data_home, seed, (subsample, n)) for n in range(subsample)]
 
 
 if __name__ == "__main__":

@@ -1,19 +1,15 @@
 import argparse
 from datetime import timedelta
-import json
 import os
 import pickle
 import time
-import sys
-import re
 
-import numpy as np
 from sklearn.metrics import accuracy_score, top_k_accuracy_score, f1_score, precision_score, recall_score
 from codecarbon import OfflineEmissionsTracker
 
-from strep.util import fix_seed, create_output_dir, write_json
+from strep.util import create_output_dir, write_json
 # from strep.monitoring import monitor_flops_papi
-from data_loading import load_data
+from data_loading import data_variant_loaders, ds_name_to_subsample
 from run_hyperparam_search import init_with_best_hyperparams
 
 
@@ -64,16 +60,12 @@ def finalize_model(clf, output_dir, param_func, sensitivity):
     return clf_info
 
 
-def evaluate_single(args):
+def evaluate_single(ds_loader, args):
     print(f'Running evaluation on {args.ds} for {args.method}')
     t0 = time.time()
-    args.seed = fix_seed(args.seed)
-    X_train, X_test, y_train, y_test, feature_names = load_data(args.ds, args.data_home, args.seed, args.subsample)
-    args.feature_names = feature_names
+    X_train, X_test, y_train, y_test, args.feature_names, args.ds = ds_loader()
+    args.subsample, args.ds_orig = ds_name_to_subsample(args.ds)
     (_, clf, _, param_func), sensitivity = init_with_best_hyperparams(args.ds, args.method, args.n_jobs)
-    
-    if args.subsample is not None:
-        args.ds = f'v{args.subsample[1]}___{args.ds}'
     output_dir = create_output_dir(args.output_dir, 'train', args.__dict__)
     if args.subsample is not None:
         args.ds = args.ds.split('___')[1]
@@ -116,9 +108,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Classification training with Tensorflow, based on PyTorch training")
     # data and model input
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
-    parser.add_argument("--ds", default="credit-g")
+    parser.add_argument("--ds", default="lung_cancer")
     parser.add_argument("--subsample", default=None)
-    parser.add_argument("--method", default="RR")
+    parser.add_argument("--method", default="RF")
     parser.add_argument("--n-jobs", default=-1)
     # output
     parser.add_argument("--output-dir", default='logs/sklearn', type=str, help="path to save outputs")
@@ -128,10 +120,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.subsample is not None and args.subsample > 1:
-        subsample = args.subsample
-        for n in range(args.subsample):
-            args.subsample = (subsample, n)
-            evaluate_single(args)
-    else:
-        evaluate_single(args)
+    variant_loaders = data_variant_loaders(args.ds, args.data_home, args.seed, args.subsample)
+    for ds_variant in variant_loaders:
+        evaluate_single(ds_variant, args)
