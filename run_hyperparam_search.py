@@ -39,7 +39,7 @@ def init_with_best_hyperparams(ds_name, method, n_jobs=-1, outdir='./hyperparame
     return clf, sensitivity
     
 
-def custom_hyperparam_search(method, X, y, outfile, n_iter=50, time_budget=10, seed=0, cv=5, multiprocess=False):
+def custom_hyperparam_search(method, X, y, outfile, n_iter, time_budget, seed, multiprocess, cv=5):
     _, clf, cls_params, _ = CLSF[method]
     n_jobs = cv if multiprocess else None
     # the easy way, without time budget
@@ -53,7 +53,7 @@ def custom_hyperparam_search(method, X, y, outfile, n_iter=50, time_budget=10, s
         t0 = time.time()
         for params in tqdm(param_list):
             clf.set_params(**params)
-            scores = cross_val_score(clf, X, y, cv=5, n_jobs=n_jobs)
+            scores = cross_val_score(clf, X, y, cv=cv, n_jobs=n_jobs)
             results['mean_test_score'].append(np.mean(scores))
             results['std_test_score'].append(np.std(scores))
             if (time.time() - t0) / 60 > time_budget:
@@ -68,9 +68,11 @@ def custom_hyperparam_search(method, X, y, outfile, n_iter=50, time_budget=10, s
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--n-iters", default=50)
+    parser.add_argument("--time-budget", default=60) # minutes
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
-    parser.add_argument("--ds", default='kc2')
-    parser.add_argument("--method", default='SVM')
+    parser.add_argument("--ds", default='adult')
+    parser.add_argument("--method", default='AB')
     parser.add_argument("--subsample", type=int, default=None)
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     parser.add_argument("--multiprocess", default=True)
@@ -91,7 +93,7 @@ if __name__ == "__main__":
     
     for method, X_train, y_train, outfile, seed in to_process:
         print(f'Searching hyperparameters for {outfile}')
-        custom_hyperparam_search(method, X_train, y_train, outfile, seed)
+        custom_hyperparam_search(method, X_train, y_train, outfile, args.n_iter, args.time_budget, seed, args.multiprocess)
 
         # t0 = time.time()
         # custom_hyperparam_search(args.method, X_train, y_train, outfile)

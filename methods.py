@@ -34,7 +34,7 @@ CLSF = {
         SVC(), 
         {
             'kernel': ('linear', 'rbf', 'poly', 'sigmoid'),
-            'C': uniform(0, 2),
+            'C': np.exp(np.random.rand((50)) * 6 - 3),
             'gamma': ['scale', 'auto', 0.0001, 0.001, 0.01, 0.1]
         },
         lambda clf: sum([clf.class_weight_.size, clf.intercept_.size, clf.support_vectors_.size])
@@ -46,7 +46,7 @@ CLSF = {
         {
             "n_estimators": [10, 20, 40, 75, 100, 150],
             "criterion": ["gini", "entropy"],
-            "max_depth": [10, 5],
+            "max_depth": [10, 5, 3],
             "max_features": ['sqrt', 'log2', 5, 10, 20],
         },
         # n_params = 2 * number of nodes (feature & threshold)
@@ -59,7 +59,7 @@ CLSF = {
         {
             "n_estimators": [10, 20, 40, 75, 100, 150],
             "criterion": ["gini", "entropy"],
-            "max_depth": [10, 5],
+            "max_depth": [10, 5, 3],
             "max_features": ['sqrt', 'log2', 5, 10, 20],
         },
         # n_params = 2 * number of nodes (feature & threshold)
@@ -71,7 +71,7 @@ CLSF = {
         AdaBoostClassifier(),
         {
             "n_estimators": [10, 20, 40, 75, 100, 150, 200],
-            'learning_rate': [0.01, 0.05, 0.1, 0.5, 1.0, 2.0],
+            'learning_rate': [0.01, 0.05, 0.1, 0.3, 0.5, 1.0, 1.5, 2.0],
             "algorithm": ['SAMME', 'SAMME.R']
         },
         # n_params = 2 * number of nodes (feature & threshold)
@@ -82,7 +82,7 @@ CLSF = {
         'Gaussian Naive Bayes',
         GaussianNB(),
         {
-            "var_smoothing": [1e-6, 1e-9, 1e-12]
+            "var_smoothing": [1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-12]
         },
         lambda clf: sum([clf.class_prior_.size, clf.epsilon_, ])
     ),
@@ -91,7 +91,7 @@ CLSF = {
         'Ridge Regression',
         linear_model.RidgeClassifier(),
         {
-            'alpha': uniform(0, 2)
+            'alpha': np.exp(np.random.rand((50)) * 6 - 3)
         },
         lambda clf: sum([clf.coef_.size, clf.intercept_.size])
     ),
@@ -101,7 +101,7 @@ CLSF = {
         linear_model.LogisticRegression(max_iter=500),
         {
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'C': uniform(0, 2),
+            'C': np.exp(np.random.rand((50)) * 6 - 3),
             'solver': ['lbfgs', 'sag', 'saga'],
         },
         lambda clf: sum([clf.coef_.size, clf.intercept_.size])
@@ -113,7 +113,7 @@ CLSF = {
         {
             "loss" : ['hinge', 'log_loss', 'modified_huber', 'squared_hinge', 'perceptron', 'squared_error'],
             "penalty": ['l2', 'l1', 'elasticnet'],
-            'alpha': uniform(0, 2)
+            'alpha': np.exp(np.random.rand((50)) * 6 - 3)
         },
         lambda clf: sum([clf.coef_.size, clf.intercept_.size])
     ),
@@ -122,10 +122,10 @@ CLSF = {
         'Multilayer Perceptron',
         MLPClassifier(max_iter=500, early_stopping=True),
         {
-            "hidden_layer_sizes" : [ (200,), (100,), (50,), (100, 50,), (80, 50,) ],
+            "hidden_layer_sizes" : [ (200,), (100,), (50,), (50, 30,), (100, 30,), (80, 50,), (60, 40, 20,), ],
             "solver": ['sgd', 'adam'],
             "alpha": [0.00001, 0.0001, 0.001, 0.01, 0.1],
-            "learning_rate_init": [0.00001, 0.0001, 0.001, 0.01, 0.1],
+            "learning_rate_init": [0.00001, 0.0001, 0.001, 0.05, 0.01, 0.05, 0.1, 0.2],
         },
         lambda clf: sum([layer_w.size for layer_w in clf.coefs_] + [layer_i.size for layer_i in clf.intercepts_])
     )
