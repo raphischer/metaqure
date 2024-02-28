@@ -68,7 +68,7 @@ def custom_hyperparam_search(method, X, y, outfile, n_iter, time_budget, seed, m
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-iters", default=50)
+    parser.add_argument("--n-iter", default=50)
     parser.add_argument("--time-budget", default=60) # minutes
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
     parser.add_argument("--ds", default='adult')
