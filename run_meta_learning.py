@@ -1,5 +1,11 @@
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
+
 import argparse
 import os
+from itertools import product
 
 import pandas as pd
 import numpy as np
@@ -11,20 +17,19 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, max_error
-from sklearn.model_selection import GroupKFold
-from sklearn.base import clone
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.svm import LinearSVR, SVR
 from sklearn.tree import DecisionTreeRegressor
 
-from data_loading import DATASETS
+from data_loading import ds_cv_split
+from process_logs import PROPERTIES
 
 
 SCORING = {
     'MAE': mean_absolute_error,
     'MaxE': max_error
 }
-CV_SCORER = f'test_{next(iter(SCORING.keys()))}'
+CV_SCORER = 'test_MAE'
 
 
 ENCODERS = {
@@ -57,25 +62,45 @@ REGRESSORS = {
 }
 
 
-def print_cv_scoring_results(model_name, scoring, scores):
-    results = {} # 'fit time': (f'{np.mean(scores["fit_time"]):7.2f}'[:6], f'{np.std(scores["fit_time"]):6.1f}'[:5])}
-    for split in ['train', 'test']:
-        for score in scoring:
-            res = scores[split + '_' + score]
-            mean_res, std_res = np.mean(res), np.std(res)
-            results[f'{split:<5} {score}'] = (f'{mean_res:7.5f}'[:6], f'{std_res:6.4f}'[:5])
-    print(f'{model_name:<20}' + ' - '.join([f'{metric:<10} {mean_v} +- {std_v}' for metric, (mean_v, std_v) in results.items()]))
+def predict_with_all_models(X, y, regressors, cv_splitted, seed):
+    pred_test = pd.DataFrame(index=X.index, columns=[regr for regr in regressors.keys()])
+    pred_train = pd.DataFrame(index=X.index, columns=[f'{regr}_{split}' for regr, split in product(regressors.keys(), range(len(cv_splitted)))])
+    for m_idx, (regr, (model_cls, params)) in enumerate(regressors.items()):
+        if model_cls not in [DummyRegressor, LinearRegression, SVR]:
+            params['random_state'] = seed
+        clsf = model_cls(**params)
+        # for models with intercept, onehot enocded features need to have one column dropped due to collinearity
+        # https://stackoverflow.com/questions/44712521/very-large-values-predicted-for-linear-regression
+        drop = 'first' if hasattr(clsf, 'fit_intercept') else None
+        transformers = [
+            ('cat', Pipeline(steps=[ ('onehot', OneHotEncoder(drop=drop)) ]), ['model_enc']),
+            ('num', Pipeline(steps=[ ('scaler', StandardScaler()) ]), X.drop('model_enc', axis=1).columns.tolist())
+        ]
+        preprocessor = ColumnTransformer(transformers=transformers)
+        
+        # fit and predict for each split
+        for split_idx, (train_idx, test_idx) in enumerate(cv_splitted):
+            X_train, X_test, y_train, y_test = X.iloc[train_idx], X.iloc[test_idx], y[train_idx], y[test_idx]
+            model = Pipeline(steps=[('preprocessor', preprocessor), ('regressor', clsf)])
+            model.fit(X_train, y_train)
+            pred_train.iloc[train_idx,m_idx + split_idx] = model.predict(X_train)
+            pred_test.iloc[test_idx,m_idx] = model.predict(X_test)
+            # if hasattr(model, "predict_proba"):
+        # merge the predictions of all train splits
+        pred_train[regr] = pred_train[[c_ for c_ in pred_train.columns if regr in c_]].mean(axis=1)
+        pred_train = pred_train.drop([f'{regr}_{split}' for split in range(len(cv_splitted))], axis=1)
+    return pd.concat([pred_train, pred_test, pred_train - y.reshape(-1, 1), pred_test - y.reshape(-1, 1)], axis=1, keys=['train_pred', 'test_pred', 'train_err', 'test_err'])
 
+
+DB = 'exp_results/databases/ws28_240228.pkl'
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Classification training with Tensorflow, based on PyTorch training")
+    parser = argparse.ArgumentParser()
     parser.add_argument("--meta-feature-dir", default='meta_features')
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     args = parser.parse_args()
 
     with fixedseed(np, seed=args.seed):
-
-        col = 'accuracy'
 
         for meta_ft_file in os.listdir(args.meta_feature_dir):
             if not '.csv' in meta_ft_file:
@@ -86,81 +111,30 @@ if __name__ == '__main__':
             meta_ft_cols = list(meta_features.columns)
 
             # store meta feature in database
-            database = pd.read_pickle('exp_results/databases/ws28_240222.pkl')
+            database = pd.read_pickle(DB)
             for ds, sub_db in database.groupby('dataset'):
                 if ds in meta_features.index:
                     database.loc[sub_db.index,meta_ft_cols] = meta_features[meta_features.index == ds].values
-            database['model_name'] = database['model']
-            database['model'] = LabelEncoder().fit_transform(database['model'].values)
-            meta_ft_cols.append('model')
+            database['model_enc'] = LabelEncoder().fit_transform(database['model'].values)
+            meta_ft_cols.append('model_enc')
 
             # prepare grouped cross-validation
+            meta_ds = set(database['dataset'].tolist())
             database = database.dropna()
-            X, y = database[meta_ft_cols], database[col].values
-            ft_encoding = {'model': 'cat'}
-            for ft in X.columns:
-                ft_encoding[ft] = 'num'
-            group_info = LabelEncoder().fit_transform(database['dataset'].values) # split CV across datasets
-            cv_splitted = list(GroupKFold().split(np.zeros((database.shape[0], 1)), None, group_info))
-                
-            predictions, true, proba = {}, {}, {}
-            best_models, best_name, best_score, best_scores = None, '', np.inf, None
-            split_index = np.zeros((X.shape[0], 1))
+            meta_ds = meta_ds - set(database['dataset'].tolist())
+            X = database[meta_ft_cols]
+            cv_splits = ds_cv_split(database['dataset'], args.seed)
+            print(f'\n\n\n\n:::::::::::::::: META LEARN USING {meta_ft_file.split(".")[0]} - SHAPE {X.shape} \nRemoved data sets:', meta_ds)
 
-            print(f'\n\n\n\n:::::::::::::::: META LEARN {col} USING {meta_ft_file.split(".")[0]} - SHAPE {X.shape} \n')
-            for model_name, (model_cls, params) in REGRESSORS.items():
-                if model_cls not in [DummyRegressor, LinearRegression, SVR]:
-                    params['random_state'] = args.seed
-                clsf = model_cls(**params)
-                # for models with intercept, onehot enocded features need to have one column dropped due to collinearity
-                # https://stackoverflow.com/questions/44712521/very-large-values-predicted-for-linear-regression
-                categories = [ sorted(pd.unique(X[feat]).tolist()) for feat, enc in ft_encoding.items() if enc == 'cat' ]
-                config = ('first', categories) if hasattr(clsf, 'fit_intercept') else (None, categories)
-                # create the feature preprocessing pipeline, with different encoders per enc type
-                transformers = {}
-                for enc_type in ft_encoding.values():
-                    if enc_type not in transformers:
-                        transformers[enc_type] = (enc_type, ENCODERS[enc_type](config), [ft for ft, enc_ in ft_encoding.items() if enc_ == enc_type])
-                preprocessor = ColumnTransformer(transformers=list(transformers.values()))
+            for col in PROPERTIES['train'].keys():
+                results = predict_with_all_models(X, database[col].values, REGRESSORS, cv_splits, args.seed)
+                opt_mod = results['test_err'].abs().mean().idxmin()
+                renamed = results.xs(opt_mod, level=1, axis=1).rename(lambda c_ : f'{col}_{c_}', axis=1)
+                res_formatted = ' - '.join([f'{c.replace(f"{col}_", "")}: {renamed[c].abs().mean():5.3f} +- {renamed[c].abs().std():4.2f}' for c in renamed.columns])
+                print(f'{meta_ft_file[:-4]:<8} - {col:<20} - {opt_mod:<10} - {res_formatted}')
+                database = pd.concat([database, renamed], axis=1)
 
-                predictions[model_name] = np.zeros_like(y, dtype=float)
-                true[model_name] = np.zeros_like(y, dtype=float)
-                proba[model_name] = np.zeros_like(y, dtype=float)
-                
-                # init scoring dict
-                scores = {}
-                for score in SCORING.keys():
-                    scores[f'train_{score}'] = []
-                    scores[f'test_{score}'] = []
-                
-                # fit and predict for each split
-                models = []
-                for split_idx, (train_idx, test_idx) in enumerate(cv_splitted):
-                    split_index[test_idx] = split_idx
-                    X_train, X_test, y_train, y_test = X.iloc[train_idx], X.iloc[test_idx], y[train_idx], y[test_idx]
-                    model = Pipeline(steps=[('preprocessor', preprocessor), ('regressor', clsf)])
-                    model.fit(X_train, y_train)
-                    y_train_pred = model.predict(X_train)
-                    # safe the predictions per model for later usage
-                    predictions[model_name][test_idx] = model.predict(X_test)
-                    true[model_name][test_idx] = y_test
-                    if hasattr(model, "predict_proba"):
-                        proba[model_name] = model.predict_proba(X_test)
-                    # calculate scoring
-                    for score_name, score in SCORING.items():
-                        scores[f'train_{score_name}'].append(score(y_train, y_train_pred))
-                        scores[f'test_{score_name}'].append(score(y_test, predictions[model_name][test_idx]))
-                    models.append(model)
-
-                # print scoring and best method
-                print_cv_scoring_results(model_name, SCORING.keys(), scores)
-                if np.mean(scores[CV_SCORER]) < np.mean(best_score):
-                    best_models = models
-                    best_name = model_name
-                    best_score = scores[CV_SCORER]
-                    best_scores = scores
-            print('----------- BEST METHOD:')
-            print_cv_scoring_results(best_name, SCORING.keys(), best_scores)
+            
 
             # # store true label and prediction in database
             # database[f'{col}_pred'] = predictions[best_name]

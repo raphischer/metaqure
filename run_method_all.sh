@@ -9,17 +9,17 @@ do
 
     for d in "lung_cancer" "connectionist_bench_sonar_mines_vs_rocks" "student_performance" "credit_approval" "qsar-biodeg" "spambase" "bank-marketing" "covtype"
     do
-        timeout 3600s run_method.py --ds $d --method $m --data-home $1 --output-dir $2 --subsample 2
+        timeout 3600s python run_method.py --ds $d --method $m --data-home $1 --output-dir $2 --subsample 2
     done
 
     for d in "credit-g" "hill-valley" "one-hundred-plants-texture" "one-hundred-plants-shape" "ozone-level-8hr" "kr-vs-kp" "optical_recognition_of_handwritten_digits" "support2"
     do
-        timeout 3600s run_method.py --ds $d --method $m --data-home $1 --output-dir $2 --subsample 3
+        timeout 3600s python run_method.py --ds $d --method $m --data-home $1 --output-dir $2 --subsample 3
     done
 
     for d in "olivetti_faces" "cirrhosis_patient_survival_prediction" "arrhythmia" "regensburg_pediatric_appendicitis" "amazon-commerce-reviews" "myocardial_infarction_complications" "Bioresponse" "isolet" "mushroom" "SpeedDating" "20newsgroups_vectorized" "adult" "mnist_784" "diabetes_130-us_hospitals_for_years_1999-2008"
     do
-        timeout 3600s run_method.py --ds $d --method $m --data-home $1 --output-dir $2 --subsample 5
+        timeout 3600s python run_method.py --ds $d --method $m --data-home $1 --output-dir $2 --subsample 5
     done
 done
 

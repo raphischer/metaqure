@@ -10,14 +10,11 @@ warnings.warn = warn
 import numpy as np
 import pandas as pd
 
-from sklearn import preprocessing
 from sklearn import datasets as sk_datasets
-from sklearn.model_selection import train_test_split, KFold
+from sklearn.model_selection import train_test_split, KFold, GroupKFold
 from sklearn.impute import SimpleImputer
-from sklearn.compose import ColumnTransformer
 from seedpy import fixedseed
-from scipy import sparse
-
+from sklearn.preprocessing import LabelEncoder
 
 
 # can be updated by running ucimlrepo.list_available_datasets
@@ -311,8 +308,24 @@ def load_data(ds_name, data_home=None, seed=0, subsample=None):
 def data_variant_loaders(ds_name, data_home=None, seed=0, subsample=None):
     if subsample is None:
         return [lambda: load_data(ds_name, data_home, seed, subsample)]
-    assert subsample > 1 and isinstance(subsample, int)
+    subsample = int(subsample)
+    assert subsample > 1
     return [lambda n=n: load_data(ds_name, data_home, seed, (subsample, n)) for n in range(subsample)]
+
+
+def ds_cv_split(input_ds=None, seed=0, n_splits=5):
+    if input_ds is None:
+        input_ds = []
+        for ds, subsample in input_ds:
+            to_add = [ds] if subsample is None else [ subsample_to_ds_name((subsample, n), ds) for n in range(subsample)]
+            input_ds = input_ds + to_add
+    input_ds = np.array(input_ds)
+    with fixedseed(np, seed):
+        np.random.shuffle(input_ds)
+    ds_original = [ ds_name_to_subsample(ds)[1] for ds in input_ds ]
+    group_info = LabelEncoder().fit_transform(ds_original) # split CV across original datasets
+    split_idc = list(GroupKFold(n_splits=n_splits).split(np.zeros((len(input_ds), 1)), None, group_info))
+    return split_idc
 
 
 if __name__ == "__main__":

@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--n-iter", default=50)
-    parser.add_argument("--time-budget", default=60) # minutes
+    parser.add_argument("--time-budget", default=50) # minutes
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
     parser.add_argument("--ds", default='lung_cancer')
     parser.add_argument("--method", default='RF')
