@@ -95,11 +95,10 @@ def value_to_index(value, ref, higher_better):
         return 1 if higher_better else 0
     if np.isnan(value):
         return 0
-    #      i = v / r                     OR                i = r / v
-    try:
-        return value / ref if higher_better else ref / value
-    except:
+    if (ref == 0 and higher_better) or (value == 0 and not higher_better):
         return 0
+    #      i = v / r                     OR                i = r / v
+    return value / ref if higher_better else ref / value
 
 
 def index_to_value(index, ref, higher_better):
@@ -299,10 +298,7 @@ def rate_database(database, given_meta, boundaries=None, indexmode='best', refer
                 # the best perfoming model receives index 1, everything else in relation
                 elif indexmode == 'best':
                     all_values = data[prop].dropna().values
-                    if len(all_values) == 0:
-                        ref_val = data[prop].iloc[0]
-                    else:
-                        ref_val = max(all_values) if higher_better else min(all_values)
+                    ref_val = max(all_values) if higher_better else min(all_values)
                 else:
                     raise RuntimeError(f'Invalid indexmode {indexmode}!')
                 # extract meta, project on index values and rate

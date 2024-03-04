@@ -15,9 +15,9 @@ from run_hyperparam_search import init_with_best_hyperparams
 
 CLSF_METRICS = {
     'accuracy': accuracy_score,
-    'f1': lambda y1, y2: f1_score(y1, y2, average='micro'),
-    'precision': lambda y1, y2: precision_score(y1, y2, average='micro'),
-    'recall': lambda y1, y2: recall_score(y1, y2, average='micro'),
+    'f1': lambda y1, y2, lab: f1_score(y1, y2, labels=lab, average='weighted'),
+    'precision': lambda y1, y2, lab: precision_score(y1, y2, labels=lab, average='weighted'),
+    'recall': lambda y1, y2, lab: recall_score(y1, y2, labels=lab, average='weighted'),
 }
 
 
@@ -26,11 +26,10 @@ def score(y_pred, y_proba, y_test, clf):
     # calculating predictive quality metrics
     for score, func in CLSF_METRICS.items():
         try: # some score metrics need information on available classes
-            metrics[score] = func(y_test, y_pred, labels=clf.classes_)
+            metrics[score] = func(y_test, y_pred, clf.classes_)
         except TypeError:
             metrics[score] = func(y_test, y_pred)
     if y_proba is not None:
-        
         if clf.classes_.size == 2:
             y_proba = y_proba[:, 1]
         metrics['top_5_accuracy'] = top_k_accuracy_score(y_test, y_proba, k=5, labels=clf.classes_)
@@ -108,7 +107,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Classification training with Tensorflow, based on PyTorch training")
     # data and model input
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
-    parser.add_argument("--ds", default="lung_cancer")
+    parser.add_argument("--ds", default="abalone")
     parser.add_argument("--subsample", default=None)
     parser.add_argument("--method", default="RF")
     parser.add_argument("--n-jobs", default=-1)

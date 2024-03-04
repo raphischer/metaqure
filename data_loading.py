@@ -313,17 +313,15 @@ def data_variant_loaders(ds_name, data_home=None, seed=0, subsample=None):
     return [lambda n=n: load_data(ds_name, data_home, seed, (subsample, n)) for n in range(subsample)]
 
 
-def ds_cv_split(input_ds=None, seed=0, n_splits=5):
+def ds_cv_split(input_ds=None, n_splits=5):
     if input_ds is None:
         input_ds = []
         for ds, subsample in input_ds:
             to_add = [ds] if subsample is None else [ subsample_to_ds_name((subsample, n), ds) for n in range(subsample)]
             input_ds = input_ds + to_add
-    input_ds = np.array(input_ds)
-    with fixedseed(np, seed):
-        np.random.shuffle(input_ds)
+    # split CV across original datasets
     ds_original = [ ds_name_to_subsample(ds)[1] for ds in input_ds ]
-    group_info = LabelEncoder().fit_transform(ds_original) # split CV across original datasets
+    group_info = LabelEncoder().fit_transform(ds_original)
     split_idc = list(GroupKFold(n_splits=n_splits).split(np.zeros((len(input_ds), 1)), None, group_info))
     return split_idc
 

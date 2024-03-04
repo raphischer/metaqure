@@ -23,6 +23,8 @@ from sklearn.tree import DecisionTreeRegressor
 
 from data_loading import ds_cv_split
 from process_logs import PROPERTIES
+from strep.index_and_rate import rate_database, load_database
+from strep.util import load_meta, prop_dict_to_val
 
 
 SCORING = {
@@ -57,8 +59,8 @@ REGRESSORS = {
     'SVR poly':                 (SVR, {'kernel': 'poly'}),
     'SVR sigmoid':              (SVR, {'kernel': 'sigmoid'}),
     'DecisionTree':             (DecisionTreeRegressor, {'max_depth': 5}),
-    'FriedmanTree':             (DecisionTreeRegressor, {'max_depth': 5, 'criterion': 'friedman_mse'}),
-    'PoissonTree':              (DecisionTreeRegressor, {'max_depth': 5, 'criterion': 'poisson'})
+    'FriedmanTree':             (DecisionTreeRegressor, {'max_depth': 5, 'criterion': 'friedman_mse'})
+    # 'PoissonTree':              (DecisionTreeRegressor, {'max_depth': 5, 'criterion': 'poisson'})
 }
 
 
@@ -72,11 +74,10 @@ def predict_with_all_models(X, y, regressors, cv_splitted, seed):
         # for models with intercept, onehot enocded features need to have one column dropped due to collinearity
         # https://stackoverflow.com/questions/44712521/very-large-values-predicted-for-linear-regression
         drop = 'first' if hasattr(clsf, 'fit_intercept') else None
-        transformers = [
+        preprocessor = ColumnTransformer(transformers=[
             ('cat', Pipeline(steps=[ ('onehot', OneHotEncoder(drop=drop)) ]), ['model_enc']),
             ('num', Pipeline(steps=[ ('scaler', StandardScaler()) ]), X.drop('model_enc', axis=1).columns.tolist())
-        ]
-        preprocessor = ColumnTransformer(transformers=transformers)
+        ])
         
         # fit and predict for each split
         for split_idx, (train_idx, test_idx) in enumerate(cv_splitted):
@@ -92,26 +93,42 @@ def predict_with_all_models(X, y, regressors, cv_splitted, seed):
     return pd.concat([pred_train, pred_test, pred_train - y.reshape(-1, 1), pred_test - y.reshape(-1, 1)], axis=1, keys=['train_pred', 'test_pred', 'train_err', 'test_err'])
 
 
-DB = 'exp_results/databases/ws28_240228.pkl'
+def load_meta_features(dirname):
+    meta_features = {}
+    for meta_ft_file in os.listdir(dirname):
+        if not '.csv' in meta_ft_file:
+            continue
+        meta_features[meta_ft_file.replace('.csv', '')] = pd.read_csv(os.path.join(dirname, meta_ft_file)).dropna().set_index('Unnamed: 0')
+    meta_features['combined'] = pd.concat(meta_features.values(), axis=1)
+    return meta_features
+
+
+def error_info_as_string(row):
+    return ' - '.join([f'{c.replace(f"{col}_", "")}: {row[c].abs().mean():7.3f} +- {row[c].abs().std():6.2f}' for c in row.columns if 'err' in c])
+
+
+DB = 'exp_results/databases/ws3_240301.pkl'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--meta-feature-dir", default='meta_features')
+    parser.add_argument("--meta-features-dir", default='meta_features')
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     args = parser.parse_args()
+    all_meta_features = load_meta_features(args.meta_features_dir)
+
+    use_index = True
 
     with fixedseed(np, seed=args.seed):
 
-        for meta_ft_file in os.listdir(args.meta_feature_dir):
-            if not '.csv' in meta_ft_file:
-                continue
-            
-            # load meta features
-            meta_features = pd.read_csv(os.path.join(args.meta_feature_dir, meta_ft_file)).dropna().set_index('Unnamed: 0')
+        for ft_name, meta_features in all_meta_features.items():
+            # load meta features and database        
             meta_ft_cols = list(meta_features.columns)
-
+            database = load_database(DB)
+            if use_index:
+                meta = load_meta()
+                rated_db = rate_database(database, meta, indexmode='best')[0]
+                database = prop_dict_to_val(rated_db, 'index')
             # store meta feature in database
-            database = pd.read_pickle(DB)
             for ds, sub_db in database.groupby('dataset'):
                 if ds in meta_features.index:
                     database.loc[sub_db.index,meta_ft_cols] = meta_features[meta_features.index == ds].values
@@ -123,16 +140,19 @@ if __name__ == '__main__':
             database = database.dropna()
             meta_ds = meta_ds - set(database['dataset'].tolist())
             X = database[meta_ft_cols]
-            cv_splits = ds_cv_split(database['dataset'], args.seed)
-            print(f'\n\n\n\n:::::::::::::::: META LEARN USING {meta_ft_file.split(".")[0]} - SHAPE {X.shape} \nRemoved data sets:', meta_ds)
+            cv_splits = ds_cv_split(database['dataset'])
+            results = pd.DataFrame(index=database.index)
+            print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} - SHAPE {X.shape} \nRemoved data sets:', meta_ds)
 
             for col in PROPERTIES['train'].keys():
                 results = predict_with_all_models(X, database[col].values, REGRESSORS, cv_splits, args.seed)
-                opt_mod = results['test_err'].abs().mean().idxmin()
-                renamed = results.xs(opt_mod, level=1, axis=1).rename(lambda c_ : f'{col}_{c_}', axis=1)
-                res_formatted = ' - '.join([f'{c.replace(f"{col}_", "")}: {renamed[c].abs().mean():5.3f} +- {renamed[c].abs().std():4.2f}' for c in renamed.columns])
-                print(f'{meta_ft_file[:-4]:<8} - {col:<20} - {opt_mod:<10} - {res_formatted}')
-                database = pd.concat([database, renamed], axis=1)
+                sorted_models = results['test_err'].abs().mean().sort_values()
+                best_model_prediction = results.xs(sorted_models.index[0], level=1, axis=1)
+                print(f'{ft_name:<8} - {col:<18} - Best Model: {sorted_models.index[0]:<17} - {error_info_as_string(best_model_prediction)}')
+                for regr in sorted_models.index:
+                    print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1))})')
+                results = pd.concat([results, best_model_prediction.rename(lambda c_ : f'{col}_{c_}', axis=1)], axis=1)
+            results.to_pickle(os.path.join('exp_results', 'meta_learning', f'{ft_name}.pkl'))
 
             
 
