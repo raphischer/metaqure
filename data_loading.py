@@ -44,7 +44,7 @@ UCI_MAP = {'abalone': 1, 'adult': 2, 'auto_mpg': 9, 'automobile': 10, 'balance_s
            'electrical_grid_stability_simulated_data': 471, 'real_estate_valuation': 477,
            'heart_failure_clinical_records': 519,
            'estimation_of_obesity_levels_based_on_eating_habits_and_physical_condition': 544, 'rice_cammeo_and_osmancik': 545,
-           'apartment_for_rent_classified': 555, 'seoul_bike_sharing_demand': 560, 'bone_marrow_transplant:_children': 565,
+           'apartment_for_rent_classified': 555, 'seoul_bike_sharing_demand': 560, 'bone_marrow_transplant_children': 565,
            'hcv_data': 571, 'myocardial_infarction_complications': 579, 'ai4i_2020_predictive_maintenance_dataset': 601,
            'dry_bean_dataset': 602, 'predict_students_dropout_and_academic_success': 697,
            'glioma_grading_clinical_and_mutation_features': 759, 'sepsis_survival_minimal_clinical_records': 827,
@@ -174,7 +174,7 @@ UCI_DATASETS = [
     'estimation_of_obesity_levels_based_on_eating_habits_and_physical_condition',
     'rice_cammeo_and_osmancik',
     # 'apartment_for_rent_classified', # fetch crashes
-    'bone_marrow_transplant:_children',
+    'bone_marrow_transplant_children',
     'hcv_data',
     'myocardial_infarction_complications',
     'ai4i_2020_predictive_maintenance_dataset',
