@@ -51,6 +51,8 @@ if __name__ == "__main__":
     database.to_pickle(db_file)
 
     dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname != 'complete.pkl']
-    complete = pd.concat(dbs)
+    complete = pd.concat(dbs).reset_index()
     complete.to_pickle(os.path.join(args.db_dir, f'complete.pkl'))
 
+    subset = complete[complete['dataset'].isin(pd.unique(complete['dataset'])[5:15])]
+    subset.to_pickle(os.path.join(args.db_dir, f'subset.pkl'))

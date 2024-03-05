@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTr
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 
-from data_loading import DATASETS, load_data
+from data_loading import load_data
 
 CLSF = {
     "kNN": (
@@ -177,23 +177,20 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
-    parser.add_argument("--ds", default='all')
+    parser.add_argument("--ds", default='adult')
     parser.add_argument("--method", default='RR')
     args = parser.parse_args()
-
-    all_ds = DATASETS if args.ds.lower() == 'all' else [args.ds]
     short = args.method
     name, clf, cls_params, _ = CLSF[short]
 
-    for ds in all_ds:
-        X_train, X_test, y_train, y_test, feat = load_data(ds, args.data_home)
-        t0 = time.time()
-        clf.fit(X_train, y_train)
-        t1 = time.time()
-        score = clf.score(X_test, y_test)
-        t2 = time.time()
-        tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
-        print(f'{ds[:10]:<10} {tr_s + te_s:>6} ({tr_s / (tr_s + te_s) * 100:4.1f}% train) instances  {n_class:>4} classes  {len(feat):>7} feat - {short:<4} accuracy {score*100:4.1f}%, training took {t1-t0:6.2f}s and scoring {t2-t1:6.2f}s')
+    X_train, X_test, y_train, y_test, feat = load_data(args.ds, args.data_home)
+    t0 = time.time()
+    clf.fit(X_train, y_train)
+    t1 = time.time()
+    score = clf.score(X_test, y_test)
+    t2 = time.time()
+    tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
+    print(f'{args.ds[:10]:<10} {tr_s + te_s:>6} ({tr_s / (tr_s + te_s) * 100:4.1f}% train) instances  {n_class:>4} classes  {len(feat):>7} feat - {short:<4} accuracy {score*100:4.1f}%, training took {t1-t0:6.2f}s and scoring {t2-t1:6.2f}s')
     
     print('All methods:')
     print(' '.join(f'"{m}"' for m in CLSF.keys()))

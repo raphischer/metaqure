@@ -60,8 +60,8 @@ SKLEARN_DATASETS = [
     'olivetti_faces',
     # 'lfw_people', # TODO too hard / image data 
     # 'lfw_pairs', # TODO too hard / image data
-    '20newsgroups_vectorized',
-    'covtype',
+    # '20newsgroups_vectorized',
+    # 'covtype',
     # 'kddcup99', # TODO fix error
     # 'california_housing', # TODO fix error
     # too small / not stored locally:
@@ -137,10 +137,10 @@ UCI_DATASETS = [
     'letter_recognition',
     'lung_cancer',
     'mushroom',
-    'nursery',
+    # 'nursery',
     'optical_recognition_of_handwritten_digits',
     'pen-based_recognition_of_handwritten_digits',
-    'soybean_large',
+    # 'soybean_large',
     # 'tic-tac-toe_endgame', # OPENML tic-tac-toe
     'congressional_voting_records',
     'wine',
@@ -162,7 +162,7 @@ UCI_DATASETS = [
     # 'banknote_authentication', # OPENML banknote-authentication
     'thoracic_surgery_data',
     'wholesale_customers',
-    'diabetes_130-us_hospitals_for_years_1999-2008',
+    # 'diabetes_130-us_hospitals_for_years_1999-2008',
     'student_performance',
     'diabetic_retinopathy_debrecen',
     # 'online_news_popularity', # too hard to learn
@@ -176,7 +176,7 @@ UCI_DATASETS = [
     # 'apartment_for_rent_classified', # fetch crashes
     'bone_marrow_transplant_children',
     'hcv_data',
-    'myocardial_infarction_complications',
+    # 'myocardial_infarction_complications',
     'ai4i_2020_predictive_maintenance_dataset',
     'dry_bean_dataset',
     'predict_students_dropout_and_academic_success',
@@ -187,7 +187,7 @@ UCI_DATASETS = [
     'support2',
     'national_health_and_nutrition_health_survey_2013-2014_nhanes_age_prediction_subset',
     'aids_clinical_trials_group_study_175',
-    'cdc_diabetes_health_indicators',
+    # 'cdc_diabetes_health_indicators',
     'national_poll_on_healthy_aging_npha',
     'regensburg_pediatric_appendicitis'
 ]
@@ -195,9 +195,9 @@ UCI_DATASETS = [
 DATASETS = UCI_DATASETS + SKLEARN_DATASETS + OPENML_DATASETS
 
 SUBSAMPLE = {
-    2: ["lung_cancer", "connectionist_bench_sonar_mines_vs_rocks", "student_performance", "credit_approval", "qsar-biodeg", "spambase", "bank-marketing", "covtype"],
+    2: ["lung_cancer", "connectionist_bench_sonar_mines_vs_rocks", "student_performance", "credit_approval", "qsar-biodeg", "spambase", "bank-marketing"],
     3: ["credit-g", "hill-valley", "one-hundred-plants-texture", "one-hundred-plants-shape", "ozone-level-8hr", "kr-vs-kp", "optical_recognition_of_handwritten_digits", "support2"],
-    5: ["olivetti_faces", "cirrhosis_patient_survival_prediction", "arrhythmia", "regensburg_pediatric_appendicitis", "amazon-commerce-reviews", "myocardial_infarction_complications", "Bioresponse", "isolet", "mushroom", "SpeedDating", "20newsgroups_vectorized", "adult", "mnist_784", "diabetes_130-us_hospitals_for_years_1999-2008"]
+    5: ["olivetti_faces", "cirrhosis_patient_survival_prediction", "arrhythmia", "regensburg_pediatric_appendicitis", "amazon-commerce-reviews", "Bioresponse", "isolet", "mushroom", "SpeedDating", "adult", "mnist_784"]
 }
 
 ALL_DS = []
@@ -218,25 +218,11 @@ def load_sklearn_feature_names(ds):
     return feat
     
 
-def load_sklearn(ds_name, data_home=None):
+def load_sklearn(ds_name, data_home=None, seed=0):
     ds_loader = getattr(sk_datasets, f'fetch_{ds_name}') if hasattr(sk_datasets, f'fetch_{ds_name}') else getattr(sk_datasets, f'load_{ds_name}')
-    try:
-        # some datasets come with prepared split
-        ds_train = ds_loader(subset='train', data_home=data_home)
-        X_train = ds_train.data
-        y_train = ds_train.target
-        ds_test = ds_loader(subset='test', data_home=data_home)
-        X_test = ds_test.data
-        y_test = ds_test.target
-        feature_names = load_sklearn_feature_names(ds_train)
-        if X_train.shape == X_test.shape:
-            raise TypeError # some data sets allow for specific subsets, but return the full dataset if subset is not selected well
-    except TypeError:
-        ds = ds_loader(data_home=data_home)
-        feature_names = load_sklearn_feature_names(ds)
-        X_train, X_test, y_train, y_test = train_test_split(ds.data, ds.target)
-
-    return X_train, X_test, y_train, y_test, feature_names
+    ds = ds_loader(data_home=data_home)
+    feature_names = load_sklearn_feature_names(ds)
+    return ds.data, ds.target, feature_names
 
 
 def load_openml(ds_name, data_home=None):
@@ -244,8 +230,7 @@ def load_openml(ds_name, data_home=None):
     X = pd.get_dummies(data['data']).astype(float) # one-hot
     X, feature_names = X.values, X.columns.values
     y, cat = pd.factorize(data['target'])
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-    return X_train, X_test, y_train, y_test, feature_names
+    return X, y, feature_names
 
 
 def load_uci(ds_name, data_home=None):
@@ -264,8 +249,7 @@ def load_uci(ds_name, data_home=None):
     X = pd.get_dummies(X).astype(float) # one-hot
     X, feature_names = X.values, X.columns.values
     y, cat = pd.factorize(y)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-    return X_train, X_test, y_train, y_test, feature_names
+    return X, y, feature_names
 
 
 def subsample_to_ds_name(subsample, ds_name):
@@ -280,32 +264,32 @@ def ds_name_to_subsample(ds_name):
         return None, ds_name
 
 
-def load_data(ds_name, data_home=None, seed=0, subsample=None):
+def load_data(ds_name, data_home=None, seed=42, subsample=None):
     with fixedseed(np, seed=seed):
         if ds_name in SKLEARN_DATASETS:
-            X_train, X_test, y_train, y_test, feature_names = load_sklearn(ds_name, data_home)
+            X, y, feature_names = load_sklearn(ds_name, data_home, seed=seed)
         elif ds_name in OPENML_DATASETS:
-            X_train, X_test, y_train, y_test, feature_names = load_openml(ds_name, data_home)
+            X, y, feature_names = load_openml(ds_name, data_home, seed=seed)
         elif ds_name in UCI_DATASETS:
-            X_train, X_test, y_train, y_test, feature_names = load_uci(ds_name, data_home)
+            X, y, feature_names = load_uci(ds_name, data_home, seed=seed)
         else:
             raise RuntimeError(f'Dataset {ds_name} not found!')
-        
-        imp = SimpleImputer(missing_values=np.nan, strategy='median')
-        X_train = imp.fit_transform(X_train)
-        X_test = imp.fit_transform(X_test)
+    
+    X = SimpleImputer(missing_values=np.nan, strategy='median').fit_transform(X)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=seed)
 
-        if subsample is not None:
-            kf = [idc[1] for idc in KFold(n_splits=subsample[0], random_state=seed, shuffle=True).split(np.arange(len(feature_names)))]
-            idc = kf[subsample[1]]
-            X_train = X_train[:,idc]
-            X_test = X_test[:,idc]
-            feature_names = feature_names[idc]
-            ds_name = subsample_to_ds_name(subsample, ds_name)
+    if subsample is not None: # use a fixed seed to sample features into variants
+        kf = [idc[1] for idc in KFold(n_splits=subsample[0], random_state=430286, shuffle=True).split(np.arange(len(feature_names)))]
+        idc = kf[subsample[1]]
+        X_train = X_train[:,idc]
+        X_test = X_test[:,idc]
+        feature_names = feature_names[idc]
+        ds_name = subsample_to_ds_name(subsample, ds_name)
+
     return X_train, X_test, y_train, y_test, list(feature_names), ds_name
 
 
-def data_variant_loaders(ds_name, data_home=None, seed=0, subsample=None):
+def data_variant_loaders(ds_name, data_home=None, seed=42, subsample=None):
     if subsample is None:
         return [lambda: load_data(ds_name, data_home, seed, subsample)]
     subsample = int(subsample)
@@ -335,7 +319,7 @@ if __name__ == "__main__":
     size_ds = []
     subsampleX2, subsampleX3, subsampleX5 = [], [], []
     for ds in DATASETS:
-        X_train, X_test, y_train, y_test, feat = load_data(ds, args.data_home)
+        X_train, X_test, y_train, y_test, feat, _ = load_data(ds, args.data_home)
         tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
         if X_train.shape[1] > 100:
             subsampleX5.append(ds)
