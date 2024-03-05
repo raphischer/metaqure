@@ -1,6 +1,8 @@
 import argparse
 import os
 
+import pandas as pd
+
 from strep.load_experiment_logs import assemble_database
 from strep.util import format_software, format_hardware
 
@@ -47,3 +49,8 @@ if __name__ == "__main__":
     if not os.path.isdir(args.db_dir):
         os.makedirs(args.db_dir)
     database.to_pickle(db_file)
+
+    dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname != 'complete.pkl']
+    complete = pd.concat(dbs)
+    complete.to_pickle(os.path.join(args.db_dir, f'complete.pkl'))
+
