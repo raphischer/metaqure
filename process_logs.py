@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # data and model input
     parser.add_argument("--output-dir", default='logs/sklearn', type=str, help="path to saved outputs")
     parser.add_argument("--db-dir", default='exp_results/databases')
-    parser.add_argument("--merged-dir", default='exp_results/merged')
+    parser.add_argument("--merged-dir", default='exp_results/logs')
 
     args = parser.parse_args()
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         os.makedirs(args.db_dir)
     database.to_pickle(db_file)
 
-    dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname != 'complete.pkl']
+    dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname != 'complete.pkl' and fname != 'subset.pkl']
     complete = pd.concat(dbs).reset_index()
     complete.to_pickle(os.path.join(args.db_dir, f'complete.pkl'))
 

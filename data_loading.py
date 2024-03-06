@@ -218,7 +218,7 @@ def load_sklearn_feature_names(ds):
     return feat
     
 
-def load_sklearn(ds_name, data_home=None, seed=0):
+def load_sklearn(ds_name, data_home=None):
     ds_loader = getattr(sk_datasets, f'fetch_{ds_name}') if hasattr(sk_datasets, f'fetch_{ds_name}') else getattr(sk_datasets, f'load_{ds_name}')
     ds = ds_loader(data_home=data_home)
     feature_names = load_sklearn_feature_names(ds)
@@ -267,11 +267,11 @@ def ds_name_to_subsample(ds_name):
 def load_data(ds_name, data_home=None, seed=42, subsample=None):
     with fixedseed(np, seed=seed):
         if ds_name in SKLEARN_DATASETS:
-            X, y, feature_names = load_sklearn(ds_name, data_home, seed=seed)
+            X, y, feature_names = load_sklearn(ds_name, data_home)
         elif ds_name in OPENML_DATASETS:
-            X, y, feature_names = load_openml(ds_name, data_home, seed=seed)
+            X, y, feature_names = load_openml(ds_name, data_home)
         elif ds_name in UCI_DATASETS:
-            X, y, feature_names = load_uci(ds_name, data_home, seed=seed)
+            X, y, feature_names = load_uci(ds_name, data_home)
         else:
             raise RuntimeError(f'Dataset {ds_name} not found!')
     
