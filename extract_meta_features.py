@@ -5,6 +5,7 @@ import os
 
 from tqdm import tqdm
 import pandas as pd
+import numpy as np
 
 from data_loading import ALL_DS, data_variant_loaders
 from meta_features.ds2vec import extract as ds2vec
@@ -27,7 +28,8 @@ if __name__ == '__main__':
         for ds, subsample in tqdm(ALL_DS):
             variant_loaders = data_variant_loaders(ds, args.data_home, args.seed, subsample)
             for ds_variant in variant_loaders:
-                X, _, y, _, _, ds_name = ds_variant()
+                X_train, X_test, y_train, y_test, _, ds_name = ds_variant()
+                X, y = np.concatenate([X_train, X_test]), np.concatenate([y_train, y_test])
                 all_metafeatures.append( extractor(X, y) )
                 ds_index.append(ds_name)
         ft_file = os.path.join("meta_features", f"{extractor.__module__.split('.')[-1]}.csv")

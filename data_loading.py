@@ -207,7 +207,6 @@ for subsample, subds in SUBSAMPLE.items():
     for ds in subds:
         ALL_DS.append((ds, subsample))
 
-
 def load_sklearn_feature_names(ds):
     if hasattr(ds, 'feature_names'):
         feat = ds.feature_names
@@ -252,6 +251,23 @@ def load_uci(ds_name, data_home=None):
     return X, y, feature_names
 
 
+def generate_sklearn(ds_name, seed):
+    param_funcs = {
+        'make_circles': lambda s: {'n_samples': int(s[0]), 'noise': float(s[1].replace('-', '.')), 'factor': float(s[1].replace('-', '.'))},
+        'make_moons': lambda s: {},
+        'make_hastie_10_2': lambda s: {},
+        'make_classification': lambda s: {}
+    }
+    for name, param_func in param_funcs.items():
+        if name in ds_name:
+            func = getattr(sk_datasets, name)
+            params = param_func(ds_name.replace(f'{name}_', '').split('_'))
+            params['random_state'] = seed
+            X, y = func(**params)
+            feat = np.array([f'feat_{idx}' for idx in range(X.shape[1])])
+            return X, y, feat
+
+
 def subsample_to_ds_name(subsample, ds_name):
     return f'v{subsample[1]}_{subsample[0]}___{ds_name}'
 
@@ -272,6 +288,8 @@ def load_data(ds_name, data_home=None, seed=42, subsample=None):
             X, y, feature_names = load_openml(ds_name, data_home)
         elif ds_name in UCI_DATASETS:
             X, y, feature_names = load_uci(ds_name, data_home)
+        elif 'make_' in ds_name:
+            X, y, feature_names = generate_sklearn(ds_name, seed)
         else:
             raise RuntimeError(f'Dataset {ds_name} not found!')
     
@@ -318,7 +336,7 @@ if __name__ == "__main__":
 
     size_ds = []
     subsampleX2, subsampleX3, subsampleX5 = [], [], []
-    for ds in DATASETS:
+    for ds in ['make_circles_1000_0-3_0-8']:# DATASETS:
         X_train, X_test, y_train, y_test, feat, _ = load_data(ds, args.data_home)
         tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
         if X_train.shape[1] > 100:
