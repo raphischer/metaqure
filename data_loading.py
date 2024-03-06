@@ -192,21 +192,6 @@ UCI_DATASETS = [
     'regensburg_pediatric_appendicitis'
 ]
 
-DATASETS = UCI_DATASETS + SKLEARN_DATASETS + OPENML_DATASETS
-
-SUBSAMPLE = {
-    2: ["lung_cancer", "connectionist_bench_sonar_mines_vs_rocks", "student_performance", "credit_approval", "qsar-biodeg", "spambase", "bank-marketing"],
-    3: ["credit-g", "hill-valley", "one-hundred-plants-texture", "one-hundred-plants-shape", "ozone-level-8hr", "kr-vs-kp", "optical_recognition_of_handwritten_digits", "support2"],
-    5: ["olivetti_faces", "cirrhosis_patient_survival_prediction", "arrhythmia", "regensburg_pediatric_appendicitis", "amazon-commerce-reviews", "Bioresponse", "isolet", "mushroom", "SpeedDating", "adult", "mnist_784"]
-}
-
-ALL_DS = []
-for ds in DATASETS:
-    ALL_DS.append((ds, None))
-for subsample, subds in SUBSAMPLE.items():
-    for ds in subds:
-        ALL_DS.append((ds, subsample))
-
 def load_sklearn_feature_names(ds):
     if hasattr(ds, 'feature_names'):
         feat = ds.feature_names
@@ -254,9 +239,11 @@ def load_uci(ds_name, data_home=None):
 def generate_sklearn(ds_name, seed):
     param_funcs = {
         'make_circles': lambda s: {'n_samples': int(s[0]), 'noise': float(s[1].replace('-', '.')), 'factor': float(s[1].replace('-', '.'))},
-        'make_moons': lambda s: {},
-        'make_hastie_10_2': lambda s: {},
-        'make_classification': lambda s: {}
+        'make_moons': lambda s: {'n_samples': int(s[0]), 'noise': float(s[1].replace('-', '.'))},
+        'make_hastie_10_2': lambda s: {'n_samples': int(s[0])},
+        'make_classification': lambda s: {'n_samples': int(s[0]), 'n_features': int(s[1]), 'n_informative': int(s[2]),
+                                          'n_redundant': int(s[3]), 'n_classes': int(s[4]), 'n_clusters_per_class': int(s[5]),
+                                          'class_sep': float(s[6].replace('-', '.')), 'shift': None, 'scale': None}
     }
     for name, param_func in param_funcs.items():
         if name in ds_name:
@@ -328,6 +315,31 @@ def ds_cv_split(input_ds=None, n_splits=5):
     return split_idc
 
 
+
+GENERATED_DATASETS = [
+    "make_classification_500_10_8_1_4_2_1-0", "make_classification_1000_20_10_10_5_2_1-0", "make_classification_2000_30_5_5_6_3_1-0",
+    "make_classification_500_40_10_5_5_10_1-0", "make_classification_1000_50_10_10_5_2_0-7", "make_classification_2000_60_5_5_6_3_0-7",
+    "make_classification_5000_50_40_5_30_1_1-3", "make_classification_10000_70_50_10_50_1_1-3", "make_classification_20000_30_5_5_60_3_1-3",
+    "make_classification_80000_80_10_5_20_3_0-9",
+    "make_circles_200_0-3_0-7", "make_circles_800_0-2_0-8", "make_moons_500_0-3", "make_moons_900_0-5", "make_hastie_10_2_1000"
+]
+
+DATASETS = UCI_DATASETS + SKLEARN_DATASETS + OPENML_DATASETS + GENERATED_DATASETS
+
+SUBSAMPLE = {
+    2: ["lung_cancer", "connectionist_bench_sonar_mines_vs_rocks", "student_performance", "credit_approval", "qsar-biodeg", "spambase", "bank-marketing"],
+    3: ["credit-g", "hill-valley", "one-hundred-plants-texture", "one-hundred-plants-shape", "ozone-level-8hr", "kr-vs-kp", "optical_recognition_of_handwritten_digits", "support2"],
+    5: ["olivetti_faces", "cirrhosis_patient_survival_prediction", "arrhythmia", "regensburg_pediatric_appendicitis", "amazon-commerce-reviews", "Bioresponse", "isolet", "mushroom", "SpeedDating", "adult", "mnist_784"]
+}
+
+ALL_DS = []
+for ds in DATASETS:
+    ALL_DS.append((ds, None))
+for subsample, subds in SUBSAMPLE.items():
+    for ds in subds:
+        ALL_DS.append((ds, subsample))
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -336,26 +348,47 @@ if __name__ == "__main__":
 
     size_ds = []
     subsampleX2, subsampleX3, subsampleX5 = [], [], []
-    for ds in ['make_circles_1000_0-3_0-8']:# DATASETS:
-        X_train, X_test, y_train, y_test, feat, _ = load_data(ds, args.data_home)
-        tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
-        if X_train.shape[1] > 100:
-            subsampleX5.append(ds)
-        elif X_train.shape[1] > 60:
-            subsampleX3.append(ds)
-        elif X_train.shape[1] > 40:
-            subsampleX2.append(ds)
-        print(f'{ds[:20]:<20} {tr_s + te_s:>6} ({tr_s / (tr_s + te_s) * 100:4.1f}% train) instances  {n_class:>4} classes  {len(feat):>7} feat - {str(feat)[:50]} ...')
-        size_ds.append( (tr_s + te_s, ds) )
 
-    print('Ordered by size:')
-    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) ]))
 
-    print('Subsamplable X2:')
-    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX2]))
+    # import plotly.express as px
+    # from methods import CLSF
+    # from sklearn.model_selection import cross_val_score
+    # import time
+    # data = {}
+    # for ds in ['make_classification_500_10_8_1_4_2_1-0', 'make_classification_1000_20_10_10_5_2_1-0', 'make_classification_2000_30_5_5_6_3_1-0',
+    #            'make_classification_500_40_10_5_5_10_1-0', 'make_classification_1000_50_10_10_5_2_0-7', 'make_classification_2000_60_5_5_6_3_0-7',
+    #            'make_classification_5000_50_40_5_30_1_1-3', 'make_classification_10000_70_50_10_50_1_1-3', 'make_classification_20000_30_5_5_60_3_1-3',
+    #            'make_classification_80000_80_10_5_20_3_0-9',
+    #            'make_circles_200_0-3_0-7', 'make_circles_800_0-2_0-8', 'make_moons_500_0-3', 'make_moons_900_0-5', 'make_hastie_10_2_1000']:
+    #     X_train, X_test, y_train, y_test, feat, _ = load_data(ds, args.data_home)
+    #     data[ds] = X_train, y_train
+    #     px.scatter(x=X_train[:, 0], y=X_train[:, 1], color=y_train, title=ds).show()
+    # for ds, (X_train, y_train) in data.items():
+    #     t1 = time.time()
+    #     scores = {meth: np.mean(cross_val_score(CLSF[meth][1], X_train, y_train)) for meth in ['RR', 'RF', 'MLP']}
+    #     print(f'{ds:<50} {str(X_train.shape):<12} {np.unique(y_train).size:<2} classes {time.time()-t1:7.3f}s - {" - ".join([f"{meth:<3} {scr:5.3f}%" for meth, scr in scores.items()])}')
 
-    print('Subsamplable X3:')
-    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX3]))
 
-    print('Subsamplable X5:')
-    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX5]))
+
+    # for ds in DATASETS:
+    #     tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
+    #     if X_train.shape[1] > 100:
+    #         subsampleX5.append(ds)
+    #     elif X_train.shape[1] > 60:
+    #         subsampleX3.append(ds)
+    #     elif X_train.shape[1] > 40:
+    #         subsampleX2.append(ds)
+    #     print(f'{ds[:20]:<20} {tr_s + te_s:>6} ({tr_s / (tr_s + te_s) * 100:4.1f}% train) instances  {n_class:>4} classes  {len(feat):>7} feat - {str(feat)[:50]} ...')
+    #     size_ds.append( (tr_s + te_s, ds) )
+
+    # print('Ordered by size:')
+    # print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) ]))
+
+    # print('Subsamplable X2:')
+    # print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX2]))
+
+    # print('Subsamplable X3:')
+    # print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX3]))
+
+    # print('Subsamplable X5:')
+    # print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX5]))
