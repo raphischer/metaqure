@@ -9,12 +9,12 @@ import numpy as np
 
 from data_loading import ALL_DS, data_variant_loaders
 from meta_features.ds2vec import extract as ds2vec
-from meta_features.simple import extract as simple
+from meta_features.statistical import extract as statistical
 from meta_features.pca import extract as pca
 
 warnings.filterwarnings('ignore')
 
-EXTRACTORS = [simple, pca, ds2vec]
+EXTRACTORS = [statistical, pca, ds2vec]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
