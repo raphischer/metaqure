@@ -64,7 +64,7 @@ def evaluate_single(ds_loader, args):
     t0 = time.time()
     X_train, X_test, y_train, y_test, args.feature_names, args.ds = ds_loader()
     args.subsample, args.ds_orig = ds_name_to_subsample(args.ds)
-    (_, clf, _, param_func), sensitivity = init_with_best_hyperparams(args.ds, args.method, args.n_jobs)
+    (_, clf, _, param_func), sensitivity = init_with_best_hyperparams(args.ds, args.method, args.seed, args.n_jobs)
     output_dir = create_output_dir(args.output_dir, 'train', args.__dict__)
     if args.subsample is not None:
         args.ds = args.ds.split('___')[1]

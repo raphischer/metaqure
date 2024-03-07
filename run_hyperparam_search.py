@@ -19,7 +19,13 @@ def hyperparam_fname(ds_name, method, outdir='./hyperparameters'):
     return os.path.join(outdir, f'hyperparameters__{ds_name}__{method.replace(" ", "_")}.json')
 
 
-def init_with_best_hyperparams(ds_name, method, n_jobs=-1, outdir='./hyperparameters'):
+def init_with_best_hyperparams(ds_name, method, seed=42, n_jobs=-1, outdir='./hyperparameters'):
+    if 'PFN32' in method: # use baseline model
+        ens_size = int(method.replace('PFN', ''))
+        from tabpfn import TabPFNClassifier
+        return (None, TabPFNClassifier(device='cpu', N_ensemble_configurations=ens_size, seed=seed), None, lambda m: np.nan), np.nan
+    
+    # 
     clf = CLSF[method]
     fname = hyperparam_fname(ds_name, method, outdir)
     try:
@@ -32,6 +38,10 @@ def init_with_best_hyperparams(ds_name, method, n_jobs=-1, outdir='./hyperparame
             clf[1].set_params(**{'n_jobs': n_jobs})
         except ValueError:
             print('n_jobs cannot be set for method', method)
+        try:
+            clf[1].set_params(**{'random_state': seed})
+        except ValueError:
+            print('random_state cannot be set for method', method)
         sensitivity = np.std(hyper_content['mean_test_score'])
     except FileNotFoundError:
         print('  no hyperparameter search information found, using default hyperparameters instead')
@@ -81,7 +91,7 @@ if __name__ == "__main__":
     variant_loaders = data_variant_loaders(args.ds, args.data_home, args.seed, args.subsample)
     for ds_variant in variant_loaders:
         X, _, y, _, _, ds_name = ds_variant()
-        outfile = hyperparam_fname(ds_name, args.method)
+        outfile = hyperparam_fname(ds_name, args.method, 'hyperparameters_new')
         print(f'Searching hyperparameters for {outfile}')
         custom_hyperparam_search(args.method, X, y, outfile, args.n_iter, args.time_budget, args.seed, args.multiprocess)    
 

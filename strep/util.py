@@ -6,6 +6,7 @@ import random as python_random
 import sys
 import pkg_resources
 import re
+import pathlib
 
 import numpy as np
 import pandas as pd
@@ -107,6 +108,8 @@ class PatchedJSONEncoder(json.JSONEncoder):
             return obj.to_json()
         if pd.isnull(obj):
             return None
+        if isinstance(obj, pathlib.PosixPath):
+            return str(obj)
         return json.JSONEncoder.default(self, obj)
 
 

@@ -10,10 +10,10 @@ warnings.warn = warn
 import numpy as np
 import pandas as pd
 
+from seedpy import fixedseed
 from sklearn import datasets as sk_datasets
 from sklearn.model_selection import train_test_split, KFold, GroupKFold
 from sklearn.impute import SimpleImputer
-from seedpy import fixedseed
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -370,25 +370,26 @@ if __name__ == "__main__":
 
 
 
-    # for ds in DATASETS:
-    #     tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
-    #     if X_train.shape[1] > 100:
-    #         subsampleX5.append(ds)
-    #     elif X_train.shape[1] > 60:
-    #         subsampleX3.append(ds)
-    #     elif X_train.shape[1] > 40:
-    #         subsampleX2.append(ds)
-    #     print(f'{ds[:20]:<20} {tr_s + te_s:>6} ({tr_s / (tr_s + te_s) * 100:4.1f}% train) instances  {n_class:>4} classes  {len(feat):>7} feat - {str(feat)[:50]} ...')
-    #     size_ds.append( (tr_s + te_s, ds) )
+    for ds in DATASETS:
+        X_train, X_test, y_train, y_test, feat, _ = load_data(ds, args.data_home)
+        tr_s, te_s, n_class = y_train.size,  y_test.size, np.unique(y_test).size
+        if X_train.shape[1] > 100:
+            subsampleX5.append(ds)
+        elif X_train.shape[1] > 60:
+            subsampleX3.append(ds)
+        elif X_train.shape[1] > 40:
+            subsampleX2.append(ds)
+        print(f'{ds[:20]:<20} {tr_s + te_s:>6} ({tr_s / (tr_s + te_s) * 100:4.1f}% train) instances  {n_class:>4} classes  {len(feat):>7} feat - {str(feat)[:50]} ...')
+        size_ds.append( (tr_s + te_s, ds) )
 
-    # print('Ordered by size:')
-    # print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) ]))
+    print('Ordered by size:')
+    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) ]))
 
-    # print('Subsamplable X2:')
-    # print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX2]))
+    print('Subsamplable X2:')
+    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX2]))
 
-    # print('Subsamplable X3:')
-    # print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX3]))
+    print('Subsamplable X3:')
+    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX3]))
 
-    # print('Subsamplable X5:')
-    # print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX5]))
+    print('Subsamplable X5:')
+    print(' '.join([ f'"{ds}"' for _, ds in sorted(size_ds) if ds in subsampleX5]))
