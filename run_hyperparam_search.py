@@ -20,7 +20,7 @@ def hyperparam_fname(ds_name, method, outdir='./hyperparameters'):
 
 
 def init_with_best_hyperparams(ds_name, method, seed=42, n_jobs=-1, outdir='./hyperparameters'):
-    if 'PFN32' in method: # use baseline model
+    if 'PFN' in method: # use baseline model
         ens_size = int(method.replace('PFN', ''))
         from tabpfn import TabPFNClassifier
         return (None, TabPFNClassifier(device='cpu', N_ensemble_configurations=ens_size, seed=seed), None, lambda m: np.nan), np.nan

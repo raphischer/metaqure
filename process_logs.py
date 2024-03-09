@@ -50,9 +50,13 @@ if __name__ == "__main__":
         os.makedirs(args.db_dir)
     database.to_pickle(db_file)
 
-    dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname != 'complete.pkl' and fname != 'subset.pkl']
+    dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname not in ['complete.pkl', 'baselines.pkl', 'subset.pkl']]
     complete = pd.concat(dbs).reset_index()
-    complete.to_pickle(os.path.join(args.db_dir, f'complete.pkl'))
+    baselines = complete[complete['model'].isin(['PFN4', 'PFN16', 'PFN64'])]
+    complete = complete.drop(baselines.index, axis=0)
+
+    baselines.reset_index().to_pickle(os.path.join(args.db_dir, f'baselines.pkl'))
+    complete.reset_index().to_pickle(os.path.join(args.db_dir, f'complete.pkl'))
 
     subset = complete[complete['dataset'].isin(pd.unique(complete['dataset'])[5:15])]
-    subset.to_pickle(os.path.join(args.db_dir, f'subset.pkl'))
+    subset.reset_index().to_pickle(os.path.join(args.db_dir, f'subset.pkl'))
