@@ -16,7 +16,7 @@ do
             timeout 3600s python run_method.py --ds $d --method $m --seed $s --data-home $1 --output-dir $2
         done
 
-        # subset data sets
+        # real-world subset data
         for d in "lung_cancer" "connectionist_bench_sonar_mines_vs_rocks" "student_performance" "credit_approval" "qsar-biodeg" "spambase" "bank-marketing"
         do
             timeout 3600s python run_method.py --ds $d --method $m --seed $s --data-home $1 --output-dir $2 --subsample 2
