@@ -121,8 +121,7 @@ if __name__ == '__main__':
     with fixedseed(np, seed=args.seed):
         for ft_name, meta_features in all_meta_features.items():
             # load meta features and database        
-            meta_ft_cols = list(meta_features.columns)
-            meta_ft_cols.append('model_enc')
+            meta_ft_cols = list(meta_features.columns) + ['model_enc']
             database = load_database(DB)
             baselines = database[database['model'].isin(['PFN4', 'PFN16', 'PFN64'])]
             database = database.drop(baselines.index, axis=0)
@@ -136,11 +135,10 @@ if __name__ == '__main__':
                         db.loc[sub_db.index,meta_features.columns] = meta_features[meta_features.index == ds].values
                 db['model_enc'] = LabelEncoder().fit_transform(db['model'].values)
                 db['environment_enc'] = LabelEncoder().fit_transform(db['environment'].values)
-                db = db.dropna()
                 # prepare grouped cross-validation
                 cv_splits = ds_cv_split(db['dataset'])
                 for use_env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
-                    X = db[meta_ft_cols]
+                    X = db[cols]
                     print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {use_env} - SHAPE {X.shape} \n')
 
                     for col in PROPERTIES['train'].keys():
