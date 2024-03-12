@@ -98,7 +98,7 @@ def load_meta_features(dirname):
     for meta_ft_file in os.listdir(dirname):
         if not '.csv' in meta_ft_file:
             continue
-        meta_features[meta_ft_file.replace('.csv', '')] = pd.read_csv(os.path.join(dirname, meta_ft_file)).dropna().set_index('Unnamed: 0')
+        meta_features[meta_ft_file.replace('.csv', '')] = pd.read_csv(os.path.join(dirname, meta_ft_file)).fillna(0).set_index('Unnamed: 0')
     meta_features['combined'] = pd.concat(meta_features.values(), axis=1)
     return meta_features
 
@@ -107,7 +107,7 @@ def error_info_as_string(row):
     return ' - '.join([f'{c.replace(f"{col}_", "")}: {row[c].abs().mean():7.3f} +- {row[c].abs().std():6.2f}' for c in row.columns if 'err' in c])
 
 
-DB = 'exp_results/databases/ws3_240301.pkl'
+DB = 'exp_results/databases/subset.pkl'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -116,43 +116,47 @@ if __name__ == '__main__':
     args = parser.parse_args()
     all_meta_features = load_meta_features(args.meta_features_dir)
 
-    use_index = True
+    use_environment = False
 
     with fixedseed(np, seed=args.seed):
-
         for ft_name, meta_features in all_meta_features.items():
             # load meta features and database        
             meta_ft_cols = list(meta_features.columns)
-            database = load_database(DB)
-            if use_index:
-                meta = load_meta()
-                rated_db = rate_database(database, meta, indexmode='best')[0]
-                database = prop_dict_to_val(rated_db, 'index')
-            # store meta feature in database
-            for ds, sub_db in database.groupby('dataset'):
-                if ds in meta_features.index:
-                    database.loc[sub_db.index,meta_ft_cols] = meta_features[meta_features.index == ds].values
-            database['model_enc'] = LabelEncoder().fit_transform(database['model'].values)
             meta_ft_cols.append('model_enc')
+            database = load_database(DB)
+            baselines = database[database['model'].isin(['PFN4', 'PFN16', 'PFN64'])]
+            database = database.drop(baselines.index, axis=0)
+            meta = load_meta()
+            rated_db = rate_database(database, meta, indexmode='best')[0]
+            index_db, value_db = prop_dict_to_val(rated_db, 'index'), prop_dict_to_val(rated_db, 'value')
+            all_results, result_cols = [], []
+            for db, scale in zip([index_db, value_db], ['index', 'value']):
+                # store meta feature in database
+                for ds, sub_db in db.groupby('dataset'):
+                    if ds in meta_features.index:
+                        db.loc[sub_db.index,meta_features.columns] = meta_features[meta_features.index == ds].values
+                db['model_enc'] = LabelEncoder().fit_transform(db['model'].values)
+                db['environment_enc'] = LabelEncoder().fit_transform(db['environment'].values)
+                db = db.dropna()
+                # prepare grouped cross-validation
+                cv_splits = ds_cv_split(db['dataset'])
+                for env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
+                    X = db[meta_ft_cols]
+                    print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} - SHAPE {X.shape} \n')
 
-            # prepare grouped cross-validation
-            meta_ds = set(database['dataset'].tolist())
-            database = database.dropna()
-            meta_ds = meta_ds - set(database['dataset'].tolist())
-            X = database[meta_ft_cols]
-            cv_splits = ds_cv_split(database['dataset'])
-            results = pd.DataFrame(index=database.index)
-            print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} - SHAPE {X.shape} \nRemoved data sets:', meta_ds)
+                    for col in PROPERTIES['train'].keys():
+                        results = predict_with_all_models(X, db[col].values, REGRESSORS, cv_splits, args.seed)
+                        sorted_models = results['test_err'].abs().mean().sort_values()
+                        best_model_prediction = results.xs(sorted_models.index[0], level=1, axis=1)
+                        print(f'{ft_name:<8} - {col:<18} - Best Model: {sorted_models.index[0]:<17} - {error_info_as_string(best_model_prediction)}')
+                        for regr in sorted_models.index:
+                            print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1))})')
+                        # TODO also store sorted_models.index[0] (best model name?)
+                        all_results.append(best_model_prediction.rename(lambda c_ : f'{col}_{c_}', axis=1))
+                        result_cols.append(f'{env}__{scale}')
 
-            for col in PROPERTIES['train'].keys():
-                results = predict_with_all_models(X, database[col].values, REGRESSORS, cv_splits, args.seed)
-                sorted_models = results['test_err'].abs().mean().sort_values()
-                best_model_prediction = results.xs(sorted_models.index[0], level=1, axis=1)
-                print(f'{ft_name:<8} - {col:<18} - Best Model: {sorted_models.index[0]:<17} - {error_info_as_string(best_model_prediction)}')
-                for regr in sorted_models.index:
-                    print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1))})')
-                results = pd.concat([results, best_model_prediction.rename(lambda c_ : f'{col}_{c_}', axis=1)], axis=1)
-            results.to_pickle(os.path.join('exp_results', 'meta_learning', f'{ft_name}.pkl'))
+            final_results = pd.concat(all_results, keys=result_cols, axis=1)
+            final_results.to_pickle(os.path.join('exp_results', 'meta_learning', f'{ft_name}.pkl'))
 
             
 
