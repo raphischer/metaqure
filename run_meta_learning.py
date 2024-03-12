@@ -139,9 +139,9 @@ if __name__ == '__main__':
                 db = db.dropna()
                 # prepare grouped cross-validation
                 cv_splits = ds_cv_split(db['dataset'])
-                for env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
+                for use_env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
                     X = db[meta_ft_cols]
-                    print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {env} - SHAPE {X.shape} \n')
+                    print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {use_env} - SHAPE {X.shape} \n')
 
                     for col in PROPERTIES['train'].keys():
                         results = predict_with_all_models(X, db[col].values, REGRESSORS, cv_splits, args.seed)
@@ -152,13 +152,13 @@ if __name__ == '__main__':
                         #     print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1))})')
                         # TODO also store sorted_models.index[0] (best model name?)
                         all_results.append(best_model_prediction.rename(lambda c_ : f'{col}_{c_}', axis=1))
-                        result_cols.append(f'{env}__{scale}')
+                        result_cols.append(f'{use_env}__{scale}')
                         # recalculate index predictions to real value predictions
                         if scale == 'index':
                             higher_better = 'maximize' in meta['properties'][col] and meta['properties'][col]['maximize']
                             recalc_results = pd.DataFrame(index=db.index)
                             # needs to be split into calculations for each DS TASK ENV COMBO (due to different reference values)
-                            for (ds, task, env), sub_db in db.groupby(['dataset', 'task', 'environment']):
+                            for _, sub_db in db.groupby(['dataset', 'task', 'environment']):
                                 ref_idx = sub_db['compound_index'].idxmax() # maximal value has index == 1
                                 ref_val = value_db.loc[ref_idx,col]
                                 recalc_results.loc[sub_db.index,f'{col}_train_pred'] = all_results[-1].loc[sub_db.index,f'{col}_train_pred'].map(lambda v: index_to_value(v, ref_val, higher_better))
@@ -166,7 +166,7 @@ if __name__ == '__main__':
                                 recalc_results.loc[sub_db.index,f'{col}_train_err'] = value_db.loc[sub_db.index,col] - recalc_results.loc[sub_db.index,f'{col}_train_pred']
                                 recalc_results.loc[sub_db.index,f'{col}_test_err'] = value_db.loc[sub_db.index,col] - recalc_results.loc[sub_db.index,f'{col}_test_pred']
                             all_results.append(recalc_results)
-                            result_cols.append(f'{env}__rec_index')
+                            result_cols.append(f'{use_env}__rec_index')
 
             final_results = pd.concat(all_results, keys=result_cols, axis=1)
             final_results.to_pickle(os.path.join('exp_results', 'meta_learning', f'{ft_name}.pkl'))
