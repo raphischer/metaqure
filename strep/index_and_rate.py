@@ -101,9 +101,12 @@ def value_to_index(value, ref, higher_better):
     return value / ref if higher_better else ref / value
 
 
-def index_to_value(index, ref, higher_better):
+def index_to_value(index, ref, higher_better, cap_at_reference=False):
     if index == 0:
         index = 10e-4
+    if index > 1 and cap_at_reference:
+        print('Encountered an index value that is better than the best empiric result, but will return reference instead')
+        return ref
     #      v = i * r                            OR         v = r / i
     return index * ref  if higher_better else ref / index
 
@@ -329,7 +332,7 @@ def rate_database(database, given_meta, boundaries=None, indexmode='best', refer
                     raise NotImplementedError() # but should be the value with index val 1
                 else: # indexmode == 'best'
                     ref_val = sorted([(entry['index'], entry['value']) for entry in data[prop]])[-1][1]
-                real_boundaries[group_field_vals][prop] = [(index_to_value(start, ref_val, higher_better), index_to_value(stop, ref_val, higher_better)) for (start, stop) in pr_bounds]
+                real_boundaries[group_field_vals][prop] = [(index_to_value(start, ref_val, higher_better, False), index_to_value(stop, ref_val, higher_better, False)) for (start, stop) in pr_bounds]
         database.loc[data.index,data.columns] = data
     
     # make certain model metrics available across all tasks

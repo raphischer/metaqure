@@ -22,7 +22,6 @@ from sklearn.svm import LinearSVR, SVR
 from sklearn.tree import DecisionTreeRegressor
 
 from data_loading import ds_cv_split
-from process_logs import PROPERTIES
 from strep.index_and_rate import rate_database, load_database, index_to_value
 from strep.util import load_meta, prop_dict_to_val
 
@@ -104,7 +103,7 @@ def load_meta_features(dirname):
     return meta_features
 
 
-def error_info_as_string(row):
+def error_info_as_string(row, col):
     return ' - '.join([f'{c.replace(f"{col}_", "")}: {row[c].abs().mean():7.3f} +- {row[c].abs().std():6.2f}' for c in row.columns if 'err' in c])
 
 
@@ -138,14 +137,11 @@ if __name__ == '__main__':
                 # prepare grouped cross-validation
                 cv_splits = ds_cv_split(db['dataset'])
                 for use_env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
-                    X = db[cols]
-                    print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {use_env} - SHAPE {X.shape} \n')
-
-                    for col in PROPERTIES['train'].keys():
-                        results = predict_with_all_models(X, db[col].values, REGRESSORS, cv_splits, args.seed)
+                    print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {use_env} \n')
+                    for col in meta['properties'].keys():
+                        results = predict_with_all_models(db[cols], db[col].values, REGRESSORS, cv_splits, args.seed)
                         sorted_models = results['test_err'].abs().mean().sort_values()
                         best_model_prediction = results.xs(sorted_models.index[0], level=1, axis=1)
-                        print(f'{ft_name:<8} - {col:<18} - Best Model: {sorted_models.index[0]:<17} - {error_info_as_string(best_model_prediction)}')
                         # for regr in sorted_models.index:
                         #     print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1))})')
                         # TODO also store sorted_models.index[0] (best model name?)
@@ -157,7 +153,7 @@ if __name__ == '__main__':
                             recalc_results = pd.DataFrame(index=db.index)
                             # needs to be split into calculations for each DS TASK ENV COMBO (due to different reference values)
                             for _, sub_db in db.groupby(['dataset', 'task', 'environment']):
-                                ref_idx = sub_db['compound_index'].idxmax() # maximal value has index == 1
+                                ref_idx = sub_db[col].idxmax() # reference value always has highest index (== 1)
                                 ref_val = value_db.loc[ref_idx,col]
                                 recalc_results.loc[sub_db.index,f'{col}_train_pred'] = all_results[-1].loc[sub_db.index,f'{col}_train_pred'].map(lambda v: index_to_value(v, ref_val, higher_better))
                                 recalc_results.loc[sub_db.index,f'{col}_test_pred'] = all_results[-1].loc[sub_db.index,f'{col}_test_pred'].map(lambda v: index_to_value(v, ref_val, higher_better))
@@ -165,6 +161,7 @@ if __name__ == '__main__':
                                 recalc_results.loc[sub_db.index,f'{col}_test_err'] = value_db.loc[sub_db.index,col] - recalc_results.loc[sub_db.index,f'{col}_test_pred']
                             all_results.append(recalc_results)
                             result_cols.append(f'{use_env}__rec_index')
+                        print(f'{ft_name:<8} - {col:<18} - Best Model: {sorted_models.index[0]:<17} - {error_info_as_string(all_results[-1], col)}')
 
             final_results = pd.concat(all_results, keys=result_cols, axis=1)
             final_results.to_pickle(os.path.join('exp_results', 'meta_learning', f'{ft_name}.pkl'))
