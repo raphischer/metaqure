@@ -23,7 +23,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 from data_loading import ds_cv_split
 from process_logs import PROPERTIES
-from strep.index_and_rate import rate_database, load_database
+from strep.index_and_rate import rate_database, load_database, index_to_value
 from strep.util import load_meta, prop_dict_to_val
 
 
@@ -74,9 +74,10 @@ def predict_with_all_models(X, y, regressors, cv_splitted, seed):
         # for models with intercept, onehot enocded features need to have one column dropped due to collinearity
         # https://stackoverflow.com/questions/44712521/very-large-values-predicted-for-linear-regression
         drop = 'first' if hasattr(clsf, 'fit_intercept') else None
+        cat_cols = ['model_enc'] if 'environment_enc' not in X.columns else ['model_enc', 'environment_enc']
         preprocessor = ColumnTransformer(transformers=[
-            ('cat', Pipeline(steps=[ ('onehot', OneHotEncoder(drop=drop)) ]), ['model_enc']),
-            ('num', Pipeline(steps=[ ('scaler', StandardScaler()) ]), X.drop('model_enc', axis=1).columns.tolist())
+            ('cat', Pipeline(steps=[ ('onehot', OneHotEncoder(drop=drop)) ]), cat_cols),
+            ('num', Pipeline(steps=[ ('scaler', StandardScaler()) ]), X.drop(cat_cols, axis=1).columns.tolist())
         ])
         
         # fit and predict for each split
@@ -107,7 +108,7 @@ def error_info_as_string(row):
     return ' - '.join([f'{c.replace(f"{col}_", "")}: {row[c].abs().mean():7.3f} +- {row[c].abs().std():6.2f}' for c in row.columns if 'err' in c])
 
 
-DB = 'exp_results/databases/subset.pkl'
+DB = 'exp_results/databases/complete.pkl'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -115,8 +116,7 @@ if __name__ == '__main__':
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     args = parser.parse_args()
     all_meta_features = load_meta_features(args.meta_features_dir)
-
-    use_environment = False
+    meta = load_meta()
 
     with fixedseed(np, seed=args.seed):
         for ft_name, meta_features in all_meta_features.items():
@@ -126,7 +126,6 @@ if __name__ == '__main__':
             database = load_database(DB)
             baselines = database[database['model'].isin(['PFN4', 'PFN16', 'PFN64'])]
             database = database.drop(baselines.index, axis=0)
-            meta = load_meta()
             rated_db = rate_database(database, meta, indexmode='best')[0]
             index_db, value_db = prop_dict_to_val(rated_db, 'index'), prop_dict_to_val(rated_db, 'value')
             all_results, result_cols = [], []
@@ -142,45 +141,32 @@ if __name__ == '__main__':
                 cv_splits = ds_cv_split(db['dataset'])
                 for env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
                     X = db[meta_ft_cols]
-                    print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} - SHAPE {X.shape} \n')
+                    print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {env} - SHAPE {X.shape} \n')
 
                     for col in PROPERTIES['train'].keys():
                         results = predict_with_all_models(X, db[col].values, REGRESSORS, cv_splits, args.seed)
                         sorted_models = results['test_err'].abs().mean().sort_values()
                         best_model_prediction = results.xs(sorted_models.index[0], level=1, axis=1)
                         print(f'{ft_name:<8} - {col:<18} - Best Model: {sorted_models.index[0]:<17} - {error_info_as_string(best_model_prediction)}')
-                        for regr in sorted_models.index:
-                            print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1))})')
+                        # for regr in sorted_models.index:
+                        #     print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1))})')
                         # TODO also store sorted_models.index[0] (best model name?)
                         all_results.append(best_model_prediction.rename(lambda c_ : f'{col}_{c_}', axis=1))
                         result_cols.append(f'{env}__{scale}')
+                        # recalculate index predictions to real value predictions
+                        if scale == 'index':
+                            higher_better = 'maximize' in meta['properties'][col] and meta['properties'][col]['maximize']
+                            recalc_results = pd.DataFrame(index=db.index)
+                            # needs to be split into calculations for each DS TASK ENV COMBO (due to different reference values)
+                            for (ds, task, env), sub_db in db.groupby(['dataset', 'task', 'environment']):
+                                ref_idx = sub_db['compound_index'].idxmax() # maximal value has index == 1
+                                ref_val = value_db.loc[ref_idx,col]
+                                recalc_results.loc[sub_db.index,f'{col}_train_pred'] = all_results[-1].loc[sub_db.index,f'{col}_train_pred'].map(lambda v: index_to_value(v, ref_val, higher_better))
+                                recalc_results.loc[sub_db.index,f'{col}_test_pred'] = all_results[-1].loc[sub_db.index,f'{col}_test_pred'].map(lambda v: index_to_value(v, ref_val, higher_better))
+                                recalc_results.loc[sub_db.index,f'{col}_train_err'] = value_db.loc[sub_db.index,col] - recalc_results.loc[sub_db.index,f'{col}_train_pred']
+                                recalc_results.loc[sub_db.index,f'{col}_test_err'] = value_db.loc[sub_db.index,col] - recalc_results.loc[sub_db.index,f'{col}_test_pred']
+                            all_results.append(recalc_results)
+                            result_cols.append(f'{env}__rec_index')
 
             final_results = pd.concat(all_results, keys=result_cols, axis=1)
             final_results.to_pickle(os.path.join('exp_results', 'meta_learning', f'{ft_name}.pkl'))
-
-            
-
-            # # store true label and prediction in database
-            # database[f'{col}_pred'] = predictions[best_name]
-            # database[f'{col}_true'] = true[best_name]
-            # database[f'{col}_prob'] = proba[best_name]
-            # database[f'{col}_pred_model'] = best_name
-            # database[f'{col}_pred_error'] = np.abs(database[f'{col}_pred'] - database[f'{col}_true'])
-            # database['split_index'] = split_index
-            
-            # # write models in order to check feature importance later on
-            # if col == COL_SEL:
-            #     path = os.path.join('results', f'{COL_SEL}_models')
-            #     if not os.path.isdir(path):
-            #         os.makedirs(path)
-            #     for idx, model in enumerate(best_models):
-            #         with open(os.path.join(path, f'model{idx}.pkl'), 'wb') as outfile:
-            #             pickle.dump(model, outfile)
-
-            # # model = make_pipeline(StandardScaler(), LinearRegression())
-            # # scores = cross_validate(model, X, y, return_train_score=True)
-
-            # print_cv_scoring_results(meta_ft_file, SCORING.keys(), scores)
-
-            # # res_str = ' - '.join([f'{key}: {np.mean(vals):7.2f} (+- {np.std(vals):7.2f})' for key, vals in cv.items()])
-            # # print(f'{meta_name:<10}  :::  {res_str}')
