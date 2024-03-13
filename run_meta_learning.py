@@ -22,7 +22,7 @@ from sklearn.svm import LinearSVR, SVR
 from sklearn.tree import DecisionTreeRegressor
 
 from data_loading import ds_cv_split
-from strep.index_and_rate import rate_database, load_database, index_to_value
+from strep.index_and_rate import rate_database, load_database, index_to_value, calculate_single_compound_rating
 from strep.util import load_meta, prop_dict_to_val
 
 
@@ -104,7 +104,7 @@ def load_meta_features(dirname):
 
 
 def error_info_as_string(row, col):
-    return ' - '.join([f'{c.replace(f"{col}_", "")}: {row[c].abs().mean():7.3f} +- {row[c].abs().std():6.2f}' for c in row.columns if 'err' in c])
+    return ' - '.join([f'{c.replace(f"{col}_", "")}: {row[c].abs().mean():10.6f} +- {row[c].abs().std():10.2f}' for c in row.columns if 'err' in c])
 
 
 DB = 'exp_results/databases/complete.pkl'
@@ -116,6 +116,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     all_meta_features = load_meta_features(args.meta_features_dir)
     meta = load_meta()
+    weights = {col: val['weight'] for col, val in meta['properties'].items()}
 
     with fixedseed(np, seed=args.seed):
         for ft_name, meta_features in all_meta_features.items():
@@ -138,18 +139,20 @@ if __name__ == '__main__':
                 cv_splits = ds_cv_split(db['dataset'])
                 for use_env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
                     print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {use_env} \n')
-                    for col in meta['properties'].keys():
+                    compound_col_res_idc = {}
+                    for col, col_meta in meta['properties'].items():
                         results = predict_with_all_models(db[cols], db[col].values, REGRESSORS, cv_splits, args.seed)
                         sorted_models = results['test_err'].abs().mean().sort_values()
                         best_model_prediction = results.xs(sorted_models.index[0], level=1, axis=1)
                         # for regr in sorted_models.index:
-                        #     print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1))})')
+                        #     print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1), col)})')
                         # TODO also store sorted_models.index[0] (best model name?)
                         all_results.append(best_model_prediction.rename(lambda c_ : f'{col}_{c_}', axis=1))
                         result_cols.append(f'{use_env}__{scale}')
+                        compound_col_res_idc[col] = len(all_results) - 1 # remember the columns that will be important for the compound index
                         # recalculate index predictions to real value predictions
                         if scale == 'index':
-                            higher_better = 'maximize' in meta['properties'][col] and meta['properties'][col]['maximize']
+                            higher_better = 'maximize' in col_meta and col_meta['maximize']
                             recalc_results = pd.DataFrame(index=db.index)
                             # needs to be split into calculations for each DS TASK ENV COMBO (due to different reference values)
                             for _, sub_db in db.groupby(['dataset', 'task', 'environment']):
@@ -161,7 +164,19 @@ if __name__ == '__main__':
                                 recalc_results.loc[sub_db.index,f'{col}_test_err'] = value_db.loc[sub_db.index,col] - recalc_results.loc[sub_db.index,f'{col}_test_pred']
                             all_results.append(recalc_results)
                             result_cols.append(f'{use_env}__rec_index')
-                        print(f'{ft_name:<8} - {col:<18} - Best Model: {sorted_models.index[0]:<17} - {error_info_as_string(all_results[-1], col)}')
+                        print(f'{ft_name:<8} - {col:<18} - {str(db[cols].shape):<10} - Best Model: {sorted_models.index[0]:<17} - {error_info_as_string(all_results[-1], col)}')
+                    if scale == 'index':
+                        # recalculate the compound index score
+                        index_pred = pd.DataFrame(index=db.index)
+                        for split in ['_train_pred', '_test_pred']:
+                            results = pd.concat([all_results[res_idx][f'{col}{split}'] for col, res_idx in compound_col_res_idc.items()], axis=1)
+                            results = results.rename(lambda c: c.replace(split, ''), axis=1)
+                            index_pred[f'compound_index{split}'] = [calculate_single_compound_rating(vals, custom_weights=weights) for _, vals in results.iterrows()]
+                            index_pred[f'compound_index{split.replace("_pred", "_err")}'] = db['compound_index'] - index_pred[f'compound_index{split}']
+                        print(f'{ft_name:<8} - {col:<18} - {str(db[cols].shape):<10} -                               - {error_info_as_string(index_pred, "compound_index")}')
+                        all_results.append(index_pred)
+                        result_cols.append(f'{use_env}__index')
+
 
             final_results = pd.concat(all_results, keys=result_cols, axis=1)
             final_results.to_pickle(os.path.join('exp_results', 'meta_learning', f'{ft_name}.pkl'))
