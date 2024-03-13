@@ -1,10 +1,15 @@
+import os
+
 import numpy as np
 import plotly.graph_objects as go
 from plotly.express.colors import sample_colorscale
+from PIL import Image
 
 from strep.util import lookup_meta
 from strep.index_and_rate import calculate_single_compound_rating, find_sub_db
 from strep.elex.util import RATING_COLORS, ENV_SYMBOLS, PATTERNS, RATING_COLOR_SCALE
+
+GRAD = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'grad.png'))
 
 
 def assemble_scatter_data(env_names, db, scale_switch, xaxis, yaxis, meta, boundaries):
@@ -14,7 +19,7 @@ def assemble_scatter_data(env_names, db, scale_switch, xaxis, yaxis, meta, bound
         for _, log in find_sub_db(db, environment=env).iterrows():
             env_data['ratings'].append(log['compound_rating'])
             env_data['index'].append(log['compound_index'])
-            env_data['names'].append(log['model']) # TODO lookup meta?
+            env_data['names'].append(lookup_meta(meta, log['model'], key='short', subdict='model'))
             for xy_axis, metric in zip(['x', 'y'], [xaxis, yaxis]):
                 if isinstance(log[metric], dict): # either take the value or the index of the metric
                     env_data[xy_axis].append(log[metric][scale_switch])
@@ -32,25 +37,26 @@ def assemble_scatter_data(env_names, db, scale_switch, xaxis, yaxis, meta, bound
     return plot_data, axis_names, rating_pos
 
 
-def add_rating_background(fig, rating_pos, mode, dark_mode):
-    for xi, (x0, x1) in enumerate(rating_pos[0]):
-        if xi == 0:
-            x0 = fig.layout.xaxis.range[1]
-        if xi == len(rating_pos[0]) - 1:
-            x1 = fig.layout.xaxis.range[0]
-        for yi, (y0, y1) in enumerate(rating_pos[1]):
-            if yi == 0:
-                y0 = fig.layout.yaxis.range[1]
-            if yi == len(rating_pos[1]) - 1:
-                y1 = fig.layout.yaxis.range[0]
-            color = RATING_COLORS[int(calculate_single_compound_rating([xi, yi], mode))]
-            if dark_mode:
-                fig.add_shape(type="rect", layer='below', line=dict(color='#0c122b'), fillcolor=color, x0=x0, x1=x1, y0=y0, y1=y1, opacity=.8)
-            else:
-                fig.add_shape(type="rect", layer='below', fillcolor=color, x0=x0, x1=x1, y0=y0, y1=y1, opacity=.8)
+def add_rating_background(fig, rating_pos, mode=None, dark_mode=None):
+    min_x, max_x, min_y, max_y = fig.layout.xaxis.range[0], fig.layout.xaxis.range[1], fig.layout.yaxis.range[0], fig.layout.yaxis.range[1]
+    if rating_pos is None:
+        grad = GRAD if mode is None else GRAD.transpose(getattr(Image, mode))
+        fig.add_layout_image(dict(source=grad, xref="x", yref="y", x=min_x, y=max_y, sizex=max_x-min_x, sizey=max_y-min_y, sizing="stretch", opacity=0.75, layer="below"))
+    else:
+        for xi, (x0, x1) in enumerate(rating_pos[0]):
+            x0 = max_x if xi == 0 else x0
+            x1 = min_x if xi == len(rating_pos[0]) - 1 else x1
+            for yi, (y0, y1) in enumerate(rating_pos[1]):
+                y0 = max_y if yi == 0 else y0
+                y1 = min_y if yi == len(rating_pos[1]) - 1 else y1
+                color = RATING_COLORS[int(calculate_single_compound_rating([xi, yi], mode))]
+                if dark_mode:
+                    fig.add_shape(type="rect", layer='below', line=dict(color='#0c122b'), fillcolor=color, x0=x0, x1=x1, y0=y0, y1=y1, opacity=.8)
+                else:
+                    fig.add_shape(type="rect", layer='below', fillcolor=color, x0=x0, x1=x1, y0=y0, y1=y1, opacity=.8)
 
 
-def create_scatter_graph(plot_data, axis_title, dark_mode, ax_border=0.1, marker_width=15, norm_colors=True):
+def create_scatter_graph(plot_data, axis_title, dark_mode, ax_border=0.1, marker_width=15, norm_colors=True, display_text=True):
     fig = go.Figure()
     i_min, i_max = min([min(vals['index']) for vals in plot_data.values()]), max([max(vals['index']) for vals in plot_data.values()])
      # link model scatter points across multiple environment
@@ -71,12 +77,12 @@ def create_scatter_graph(plot_data, axis_title, dark_mode, ax_border=0.1, marker
             text = text + model_text # place text near most middle node
             x.append(None)
             y.append(None)
-        fig.add_trace(go.Scatter(x=x, y=y, text=text, mode='lines+text', line={'color': 'black'}, showlegend=False))
+        fig.add_trace(go.Scatter(x=x, y=y, text=text, mode='lines+text', line={'color': 'black', 'width': marker_width / 5}, showlegend=False))
     for env_i, (env_name, data) in enumerate(plot_data.items()):
         # scale to vals between 0 and 1?
         index_vals = (np.array(data['index']) - i_min) / (i_max - i_min) if norm_colors else data['index']
         node_col = sample_colorscale(RATING_COLOR_SCALE, [1-val for val in index_vals])
-        text = [''] * len(data['x']) if 'names' not in data or len(plot_data) > 1 else data['names']
+        text = [''] * len(data['x']) if (not display_text) or ('names' not in data) or (len(plot_data) > 1) else data['names']
         fig.add_trace(go.Scatter(
             x=data['x'], y=data['y'], name=env_name, text=text,
             mode='markers+text', marker_symbol=ENV_SYMBOLS[env_i],
@@ -121,5 +127,5 @@ def create_bar_graph(plot_data, dark_mode, discard_y_axis):
 
 
 def create_star_plot(summary, metrics):
-    print('TODO')
+    pass # TODO
     
