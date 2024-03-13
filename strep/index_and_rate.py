@@ -57,16 +57,19 @@ def weighted_median(values, weights):
     raise RuntimeError
 
 
-def calculate_single_compound_rating(input, mode='optimistic mean'):
+def calculate_single_compound_rating(input, mode='optimistic mean', custom_weights=None):
     # extract lists of values
     if isinstance(input, pd.Series):
         input = input.to_dict()
     if isinstance(input, dict): # model summary given instead of list of ratings
         weights, index_vals = [], []
-        for val in input.values():
+        for key, val in input.items():
             if isinstance(val, dict) and 'weight' in val and val['weight'] > 0:
                 weights.append(val['weight'])
                 index_vals.append(val['index'])
+            elif isinstance(val, float) and custom_weights is not None:
+                index_vals.append(val)
+                weights.append(custom_weights[key])
     elif isinstance(input, list):
         weights = [1] * len(input)
         index_vals = input
