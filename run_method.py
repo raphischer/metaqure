@@ -5,10 +5,9 @@ import pickle
 import time
 
 from sklearn.metrics import accuracy_score, top_k_accuracy_score, f1_score, precision_score, recall_score
-from codecarbon import OfflineEmissionsTracker
 
 from strep.util import create_output_dir, write_json
-# from strep.monitoring import monitor_flops_papi
+from strep.monitoring import init_monitoring
 from data_loading import data_variant_loaders, ds_name_to_subsample
 from run_hyperparam_search import init_with_best_hyperparams
 
@@ -43,18 +42,13 @@ def score(y_pred, y_proba, y_test, clf):
 def finalize_model(clf, output_dir, param_func, sensitivity):
     model_fname = os.path.join(output_dir, 'model.pkl')
     with open(model_fname, 'wb') as modelfile:
-        pickle.dump(clf, modelfile)    
-
-    # count flops of infering single random data row
-    # test_data = np.random.rand(1, clf.n_features_in_)
-    # flops = monitor_flops_papi(lambda : clf.predict(test_data))[0]
+        pickle.dump(clf, modelfile)
 
     clf_info = {
         'hyperparams': clf.get_params(),
         'params': param_func(clf),
         'fsize': os.path.getsize(model_fname),
         'hyperparam_sensitivity': sensitivity,
-        # 'flops': flops
     }
     return clf_info
 
@@ -70,35 +64,40 @@ def evaluate_single(ds_loader, args):
         args.ds = args.ds.split('___')[1]
 
     ############## TRAINING ##############
-    emissions_tracker = OfflineEmissionsTracker(measure_power_secs=args.monitor_interval, log_level='warning', country_iso_code="DEU", save_to_file=True, output_dir=output_dir)
-    emissions_tracker.start()
-    clf.fit(X_train, y_train)
-    emissions_tracker.stop()
+    energy_tracker = init_monitoring(args.monitor_interval, output_dir)
+    try:
+        clf.fit(X_train, y_train)
+    except ValueError as e: # can happen with PFN models
+        clf, results = None, {}
+        print(e)
+    energy_tracker.stop()
 
-    # predict
-    emissions_tracker = OfflineEmissionsTracker(measure_power_secs=args.monitor_interval, log_level='warning', country_iso_code="DEU", save_to_file=True, output_dir=output_dir)
-    emissions_tracker.start()
-    if hasattr(clf, 'predict_proba'):
-        y_proba = clf.predict_proba(X_test)
-    else:
-        y_proba = None
-        y_pred = clf.predict(X_test)
-    emissions_tracker.stop()
-    if y_proba is not None:
-        y_pred = clf.predict(X_test)
+    ############## PREDICT ##############
+    if clf is not None:
+        energy_tracker = init_monitoring(args.monitor_interval, output_dir)
+        if hasattr(clf, 'predict_proba'):
+            y_proba = clf.predict_proba(X_test)
+        else:
+            y_proba = None
+            y_pred = clf.predict(X_test)
+        energy_tracker.stop()
 
-    # write results
-    results = {
-        'history': {}, # TODO track history
-        'model': finalize_model(clf, output_dir, param_func, sensitivity),
-        'metrics': score(y_pred, y_proba, y_test, clf),
-        'data': {'shape': {'train': X_train.shape, 'test': X_test.shape}}
-    }
+        if y_proba is not None:
+            y_pred = clf.predict(X_test)
+
+        # write results
+        results = {
+            'history': {}, # TODO track history
+            'model': finalize_model(clf, output_dir, param_func, sensitivity),
+            'metrics': score(y_pred, y_proba, y_test, clf),
+            'data': {'shape': {'train': X_train.shape, 'test': X_test.shape}}
+        }
     write_json(os.path.join(output_dir, f'results.json'), results)
 
     ############## FNALIZE ##############
 
     print(f"Evaluation finished in {timedelta(seconds=int(time.time() - t0))} seconds, results can be found in {output_dir}\n")
+    time.sleep(1)
     return output_dir
 
 

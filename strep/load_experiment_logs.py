@@ -6,17 +6,12 @@ import importlib
 import pandas as pd
 import numpy as np
 
-from strep.monitoring import aggregate_monitoring_log
 from strep.util import basename, PatchedJSONEncoder, read_json, read_txt, read_csv, drop_na_properties
 
 
 #############################
 ####     log loading     ####
 #############################
-
-
-def read_monitoring(filepath):
-    return aggregate_monitoring_log(filepath)
 
 
 def read_log_directory(directory):
