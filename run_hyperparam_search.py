@@ -21,10 +21,9 @@ def hyperparam_fname(ds_name, method, outdir='./hyperparameters'):
 
 
 def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir, hyperdir='./hyperparameters'):
-    if 'PFN' in method: # use PFN baseline model
-        ens_size = int(method.replace('PFN', ''))
+    if method == 'PFN': # use PFN baseline model
         from tabpfn import TabPFNClassifier
-        return (None, TabPFNClassifier(device='cpu', N_ensemble_configurations=ens_size, seed=seed), None, lambda m: np.nan), np.nan
+        return (None, TabPFNClassifier(device='cpu', seed=seed), None, lambda m: np.nan), np.nan
 
     clf = CLSF[method]
     # fix baseline method parameters that do not have the standard API
