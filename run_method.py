@@ -58,8 +58,8 @@ def evaluate_single(ds_loader, args):
     t0 = time.time()
     X_train, X_test, y_train, y_test, args.feature_names, args.ds = ds_loader()
     args.subsample, args.ds_orig = ds_name_to_subsample(args.ds)
-    (_, clf, _, param_func), sensitivity = init_with_best_hyperparams(args.ds, args.method, args.seed, args.n_jobs)
     output_dir = create_output_dir(args.output_dir, 'train', args.__dict__)
+    (_, clf, _, param_func), sensitivity = init_with_best_hyperparams(args.ds, args.method, args.seed, args.n_jobs, output_dir)
     if args.subsample is not None:
         args.ds = args.ds.split('___')[1]
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Classification training with Tensorflow, based on PyTorch training")
     # data and model input
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
-    parser.add_argument("--ds", default="abalone")
+    parser.add_argument("--ds", default="breast_cancer")
     parser.add_argument("--subsample", default=None)
     parser.add_argument("--method", default="RF")
     parser.add_argument("--n-jobs", default=-1)

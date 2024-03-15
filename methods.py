@@ -127,50 +127,34 @@ CLSF = {
         },
         lambda clf: sum([layer_w.size for layer_w in clf.coefs_] + [layer_i.size for layer_i in clf.intercepts_])
     )
-
-    # "Gauss Process": (
-    #     GaussianProcessClassifier(),
-    #     {
-    #         "kernel": [
-    #             kernels.Matern(length_scale=1.0, nu=0.5),
-    #             kernels.Matern(length_scale=1.0, nu=1.5),
-    #             kernels.Matern(length_scale=1.0, nu=2.5),
-    #             kernels.Matern(length_scale=0.5, nu=0.5),
-    #             kernels.Matern(length_scale=0.5, nu=1.5),
-    #             kernels.Matern(length_scale=0.5, nu=2.5),
-    #             kernels.Matern(length_scale=2.0, nu=0.5),
-    #             kernels.Matern(length_scale=2.0, nu=1.5),
-    #             kernels.Matern(length_scale=2.0, nu=2.5),
-    #             kernels.RBF(length_scale=1.0),
-    #             kernels.RBF(length_scale=0.5),
-    #             kernels.RBF(length_scale=2.0),
-    #             kernels.ConstantKernel(constant_value=1.0),
-    #             kernels.ConstantKernel(constant_value=0.5),
-    #             kernels.ConstantKernel(constant_value=2.0),
-    #             kernels.RationalQuadratic(length_scale=1.0, alpha=1.0),
-    #             kernels.RationalQuadratic(length_scale=1.0, alpha=0.5),
-    #             kernels.RationalQuadratic(length_scale=1.0, alpha=2.0),
-    #             kernels.RationalQuadratic(length_scale=0.5, alpha=1.0),
-    #             kernels.RationalQuadratic(length_scale=0.5, alpha=0.5),
-    #             kernels.RationalQuadratic(length_scale=0.5, alpha=2.0),
-    #             kernels.RationalQuadratic(length_scale=2.0, alpha=1.0),
-    #             kernels.RationalQuadratic(length_scale=2.0, alpha=0.5),
-    #             kernels.RationalQuadratic(length_scale=2.0, alpha=2.0),
-    #             kernels.ExpSineSquared(length_scale=1.0, periodicity=1.0),
-    #             kernels.ExpSineSquared(length_scale=1.0, periodicity=0.5),
-    #             kernels.ExpSineSquared(length_scale=1.0, periodicity=2.0),
-    #             kernels.ExpSineSquared(length_scale=0.5, periodicity=1.0),
-    #             kernels.ExpSineSquared(length_scale=0.5, periodicity=0.5),
-    #             kernels.ExpSineSquared(length_scale=0.5, periodicity=2.0),
-    #             kernels.ExpSineSquared(length_scale=2.0, periodicity=1.0),
-    #             kernels.ExpSineSquared(length_scale=2.0, periodicity=0.5),
-    #             kernels.ExpSineSquared(length_scale=2.0, periodicity=2.0),
-    #         ],
-    #         'n_restarts_optimizer': [0, 1, 2, 3, 4, 5]
-    #     },
-    #     lambda clf: 0
-    # )
 }
+
+####### AUTOGLUON
+try:
+    from autogluon.tabular.experimental import TabularClassifier
+    CLSF['AGL'] = (
+        'AutoGluon',
+        TabularClassifier(presets='medium_quality', path='/tmp/', verbosity=0),
+        None,
+        lambda clf: 0
+    )
+except ImportError:
+    print('AutoGluon not available, please install: pip install autogluon==1.0.0')
+
+####### AUTOSKLEARN
+try:
+    from autosklearn.experimental.askl2 import AutoSklearn2Classifier
+    import pandas as pd
+    if not hasattr(pd.DataFrame, 'iteritems'): # be compatiable with pandas >= 2.0
+        pd.DataFrame.iteritems = pd.DataFrame.items
+    CLSF['ASK'] = (
+        'AutoSklearn',
+        AutoSklearn2Classifier(),
+        None,
+        lambda clf: 0
+    )
+except ImportError:
+    print('AutoSklearn not available, please install: pip install auto-sklearn==0.15')
 
 
 if __name__ == "__main__":

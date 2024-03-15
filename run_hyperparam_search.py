@@ -10,24 +10,30 @@ from tqdm import tqdm
 
 from sklearn.model_selection import ParameterSampler, RandomizedSearchCV, cross_val_score
 
+from strep.util import write_json
 from data_loading import data_variant_loaders
 from methods import CLSF
-from strep.util import write_json
+from baseline_budgets import get_budget
 
 
 def hyperparam_fname(ds_name, method, outdir='./hyperparameters'):
     return os.path.join(outdir, f'hyperparameters__{ds_name}__{method.replace(" ", "_")}.json')
 
 
-def init_with_best_hyperparams(ds_name, method, seed=42, n_jobs=-1, outdir='./hyperparameters'):
-    if 'PFN' in method: # use baseline model
+def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir, hyperdir='./hyperparameters'):
+    if 'PFN' in method: # use PFN baseline model
         ens_size = int(method.replace('PFN', ''))
         from tabpfn import TabPFNClassifier
         return (None, TabPFNClassifier(device='cpu', N_ensemble_configurations=ens_size, seed=seed), None, lambda m: np.nan), np.nan
-    
-    # 
+
     clf = CLSF[method]
-    fname = hyperparam_fname(ds_name, method, outdir)
+    # fix baseline method parameters that do not have the standard API
+    if method == 'AGL':
+        clf[1].set_params(**{'time_limit': get_budget(output_dir, ds_name)})
+    if method == 'ASK':
+        clf[1].set_params(**{'time_left_for_this_task': max(get_budget(output_dir, ds_name), 30), 'seed': seed})#, 'n_jobs': args.n_jobs})#, 'metric': 'accuracy'})
+
+    fname = hyperparam_fname(ds_name, method, hyperdir)
     try:
         with open(fname, 'r') as hyperf:
             hyper_content = json.load(hyperf)

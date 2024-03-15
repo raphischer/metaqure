@@ -63,7 +63,7 @@ def monitor_jetson(jetson, interval, logfile, stopper):
     # once stopped, write the output file (in similar fashion as the emissions.csv by codecarbon)
     header = '' if os.path.isfile(logfile) else ','.join(['duration', 'energy_consumed', 'total_cpu', 'no_meas', 'nvp model'] + [key for key in jetson_entries.keys() if 'CPU' not in key]) + '\n'
     jstr_parts = [
-        float(time.time() - t0) / 1000,  # duration in seconds
+        float(time.time() - t0),         # duration in seconds
         0,                               # energy_consumed
         0,                               # total_cpu
         len(jetson_entries['RAM']),      # no_meas

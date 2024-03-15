@@ -193,7 +193,8 @@ def format_hardware(cpu, gpu=None):
     else:
         cpu_regex = [
             r'.*(Intel)\(R\) \S* (\S*).*', # Intel
-            r'\S* (AMD) \S* (\S*) .*' # AMD
+            r'\S* (AMD) \S* (\S*) .*', # AMD
+            r'(ARM\S+) Processor (.*)' # ARM
         ]
         hardware_short = cpu[:13] + '..'
         for regex in cpu_regex:
