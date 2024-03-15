@@ -1,7 +1,7 @@
 #!/bin/bash
 
-conda deactivate
-conda activate ramimp
+# conda deactivate
+# conda activate ramimp
 
 for s in "42" "7803" "5321"
 do
