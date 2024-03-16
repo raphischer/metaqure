@@ -79,13 +79,13 @@ def aggregate_log(log, property_extractors):
     return agg_log
 
 
-def merge_database(database):
+def merge_database(database, average='median'):
     database['configuration'] = database.aggregate(lambda row: ' - '.join([row['task'], row['dataset'], row['model']]), axis=1)
     database['environment'] = database.aggregate(lambda row: ' - '.join([str(row['architecture']), str(row['software'])]), axis=1)
     grouped = database.groupby(['configuration', 'environment'])
     grouped_results = grouped.first() # take first occurence as a start
-    mean_values = grouped.mean(numeric_only=True)
-    grouped_results.update(mean_values) # TODO also merge the individual log directories into list
+    average_values = getattr(grouped, average)(numeric_only=True)
+    grouped_results.update(average_values) # TODO also merge the individual log directories into list
     grouped_results['n_results'] = grouped.size()
     return grouped_results.reset_index()
 

@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname not in ['complete.pkl', 'baselines.pkl', 'subset.pkl']]
     complete = pd.concat(dbs).reset_index()
-    baselines = complete[complete['model'].isin(['PFN4', 'PFN16', 'PFN64'])]
+    baselines = complete[complete['model'].isin(['PFN', 'PFN4', 'PFN16', 'PFN64', 'PFN32', 'AGL'])]
     complete = complete.drop(baselines.index, axis=0)
 
     baselines.reset_index().to_pickle(os.path.join(args.db_dir, f'baselines.pkl'))
