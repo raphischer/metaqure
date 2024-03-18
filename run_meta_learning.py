@@ -135,8 +135,6 @@ if __name__ == '__main__':
             # load meta features and database        
             meta_ft_cols = list(meta_features.columns) + ['model_enc']
             database = load_database(DB)
-            baselines = database[database['model'].isin(['PFN4', 'PFN16', 'PFN64'])]
-            database = database.drop(baselines.index, axis=0)
             rated_db = rate_database(database, meta, indexmode='best')[0]
             index_db, value_db = prop_dict_to_val(rated_db, 'index'), prop_dict_to_val(rated_db, 'value')
             all_results, result_cols = [], []
