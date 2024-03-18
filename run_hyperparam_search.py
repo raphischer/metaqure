@@ -29,6 +29,8 @@ def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir, hyperd
     # fix baseline method parameters that do not have the standard API
     if method == 'AGL':
         clf[1].set_params(**{'time_limit': get_budget(output_dir, ds_name)})
+    if method == 'NAM':
+        clf[1].timeout = max(get_budget(output_dir, ds_name), 20)
     if method == 'ASK':
         clf[1].set_params(**{'time_left_for_this_task': max(get_budget(output_dir, ds_name), 30), 'seed': seed})#, 'n_jobs': args.n_jobs})#, 'metric': 'accuracy'})
 

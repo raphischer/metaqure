@@ -141,20 +141,32 @@ try:
 except ImportError:
     print('AutoGluon not available, please install: pip install autogluon==1.0.0')
 
-####### AUTOSKLEARN
+####### NaiveAutoML
 try:
-    from autosklearn.experimental.askl2 import AutoSklearn2Classifier
-    import pandas as pd
-    if not hasattr(pd.DataFrame, 'iteritems'): # be compatiable with pandas >= 2.0
-        pd.DataFrame.iteritems = pd.DataFrame.items
-    CLSF['ASK'] = (
-        'AutoSklearn',
-        AutoSklearn2Classifier(),
+    from naiveautoml import NaiveAutoML
+    CLSF['NAM'] = (
+        'NaiveAutoML',
+        NaiveAutoML(scoring="accuracy"),
         None,
         lambda clf: 0
     )
 except ImportError:
-    print('AutoSklearn not available, please install: pip install auto-sklearn==0.15')
+    print('NaiveAutoML not available, please install: pip install naiveautoml')
+
+####### AUTOSKLEARN
+# try:
+#     from autosklearn.experimental.askl2 import AutoSklearn2Classifier
+#     import pandas as pd
+#     if not hasattr(pd.DataFrame, 'iteritems'): # be compatiable with pandas >= 2.0
+#         pd.DataFrame.iteritems = pd.DataFrame.items
+#     CLSF['ASK'] = (
+#         'AutoSklearn',
+#         AutoSklearn2Classifier(),
+#         None,
+#         lambda clf: 0
+#     )
+# except ImportError:
+#     print('AutoSklearn not available, please install: pip install auto-sklearn==0.15')
 
 
 if __name__ == "__main__":

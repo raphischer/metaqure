@@ -4,6 +4,7 @@ import os
 import pickle
 import time
 
+import numpy as np
 from sklearn.metrics import accuracy_score, top_k_accuracy_score, f1_score, precision_score, recall_score
 
 from strep.util import create_output_dir, write_json
@@ -20,18 +21,19 @@ CLSF_METRICS = {
 }
 
 
-def score(y_pred, y_proba, y_test, clf):
+def score(y_pred, y_proba, y_test, classes):
+
     metrics = {}
     # calculating predictive quality metrics
     for score, func in CLSF_METRICS.items():
         try: # some score metrics need information on available classes
-            metrics[score] = func(y_test, y_pred, clf.classes_)
+            metrics[score] = func(y_test, y_pred, classes)
         except TypeError:
             metrics[score] = func(y_test, y_pred)
     if y_proba is not None:
-        if clf.classes_.size == 2:
+        if classes.size == 2:
             y_proba = y_proba[:, 1]
-        metrics['top_5_accuracy'] = top_k_accuracy_score(y_test, y_proba, k=5, labels=clf.classes_)
+        metrics['top_5_accuracy'] = top_k_accuracy_score(y_test, y_proba, k=5, labels=classes)
     else:
         metrics['top_5_accuracy'] = metrics['accuracy'] # top5 is bounded by top1
     return metrics
@@ -45,7 +47,7 @@ def finalize_model(clf, output_dir, param_func, sensitivity):
         pickle.dump(clf, modelfile)
 
     clf_info = {
-        'hyperparams': clf.get_params(),
+        'hyperparams': 0 if not hasattr(clf, 'get_params') else clf.get_params(),
         'params': param_func(clf),
         'fsize': os.path.getsize(model_fname),
         'hyperparam_sensitivity': sensitivity,
@@ -64,32 +66,33 @@ def evaluate_single(ds_loader, args):
         args.ds = args.ds.split('___')[1]
 
     ############## TRAINING ##############
-    energy_tracker = init_monitoring(args.monitor_interval, output_dir)
+    # energy_tracker = init_monitoring(args.monitor_interval, output_dir)
     try:
         clf.fit(X_train, y_train)
     except ValueError as e: # can happen with PFN models
         clf, results = None, {}
         print(e)
-    energy_tracker.stop()
+    # energy_tracker.stop()
 
     ############## PREDICT ##############
     if clf is not None:
-        energy_tracker = init_monitoring(args.monitor_interval, output_dir)
+        # energy_tracker = init_monitoring(args.monitor_interval, output_dir)
         if hasattr(clf, 'predict_proba'):
             y_proba = clf.predict_proba(X_test)
         else:
             y_proba = None
             y_pred = clf.predict(X_test)
-        energy_tracker.stop()
+        # energy_tracker.stop()
 
         if y_proba is not None:
             y_pred = clf.predict(X_test)
 
         # write results
+        classes = np.unique(y_train) if not hasattr(clf, 'classes_') else clf.classes_
         results = {
             'history': {}, # TODO track history
             'model': finalize_model(clf, output_dir, param_func, sensitivity),
-            'metrics': score(y_pred, y_proba, y_test, clf),
+            'metrics': score(y_pred, y_proba, y_test, classes),
             'data': {'shape': {'train': X_train.shape, 'test': X_test.shape}}
         }
     write_json(os.path.join(output_dir, f'results.json'), results)
