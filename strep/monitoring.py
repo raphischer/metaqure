@@ -5,6 +5,7 @@ import time
 import subprocess
 import platform
 import re
+import sys
 
 import numpy as np
 
@@ -19,21 +20,30 @@ def init_monitoring(monitor_interval, output_dir):
             tracker = JetsonMonitor(monitor_interval, os.path.join(output_dir, 'emissions.csv'))
         except ImportError:
             raise NotImplementedError('Codecarbon and jtop not available, no other profiling implemented!')
-    time.sleep(monitor_interval) # allow for initialization
+    # time.sleep(monitor_interval) # allow for initialization
     return tracker
 
 
 class JetsonMonitor:
 
     def __init__(self, interval=1, outfile='emissions.csv') -> None:
+        pass
         from jtop import jtop
         self.jetson = jtop()
-        try:
-            self.jetson.start()
-        except Exception: # sometimes jtop crashes and needs to be restarted?
-            os.system('sudo ./restart_jtop.sh')
-            self.jetson.start()
+        start_failed = 0
+        while start_failed > -1:
+            start_failed += 1
+            try:
+                a = self.jetson.start()
+                start_failed = -1
+            except Exception as e: # sometimes jtop crashes and needs to be restarted?
+                res = os.system('sudo /usr/bin/systemctl restart jtop.service')
+                print(f'  restarting jtop service - {res}')
+                time.sleep(5)
+                if start_failed > 10:
+                    sys.exit(1)
         self.stopper = Event()
+        time.sleep(1)
         self.p = Process(target=monitor_jetson, args=(self.jetson, interval, outfile, self.stopper))
         self.p.start()
 
