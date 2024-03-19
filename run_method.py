@@ -66,23 +66,23 @@ def evaluate_single(ds_loader, args):
         args.ds = args.ds.split('___')[1]
 
     ############## TRAINING ##############
-    # energy_tracker = init_monitoring(args.monitor_interval, output_dir)
+    energy_tracker = init_monitoring(args.monitor_interval, output_dir)
     try:
         clf.fit(X_train, y_train)
-    except ValueError as e: # can happen with PFN models
+    except (ValueError, AssertionError) as e: # can happen with PFN models
         clf, results = None, {}
         print(e)
-    # energy_tracker.stop()
+    energy_tracker.stop()
 
     ############## PREDICT ##############
     if clf is not None:
-        # energy_tracker = init_monitoring(args.monitor_interval, output_dir)
+        energy_tracker = init_monitoring(args.monitor_interval, output_dir)
         if hasattr(clf, 'predict_proba'):
             y_proba = clf.predict_proba(X_test)
         else:
             y_proba = None
             y_pred = clf.predict(X_test)
-        # energy_tracker.stop()
+        energy_tracker.stop()
 
         if y_proba is not None:
             y_pred = clf.predict(X_test)
