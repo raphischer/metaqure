@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Classification training with Tensorflow, based on PyTorch training")
     # data and model input
-    parser.add_argument("--output-dir", default='logs/sklearn', type=str, help="path to saved outputs")
+    parser.add_argument("--output-dir", default='/data/d1/sus-meta-results/logs/ws28_240315_bl', type=str, help="path to saved outputs")
     parser.add_argument("--db-dir", default='exp_results/databases')
     parser.add_argument("--merged-dir", default='exp_results/logs')
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname not in ['complete.pkl', 'baselines.pkl', 'subset.pkl']]
     complete = pd.concat(dbs).reset_index()
-    baselines = complete[complete['model'].isin(['PFN', 'PFN4', 'PFN16', 'PFN64', 'PFN32', 'AGL'])]
+    baselines = complete[complete['model'].isin(['PFN', 'AGL', 'NAM', 'PFN4', 'PFN16', 'PFN64', 'PFN32'])]
     complete = complete.drop(baselines.index, axis=0)
 
     baselines.reset_index().to_pickle(os.path.join(args.db_dir, f'baselines.pkl'))
