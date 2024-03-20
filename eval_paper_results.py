@@ -7,6 +7,7 @@ import numpy as np
 import umap
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.colors import sample_colorscale
 from plotly.subplots import make_subplots
 from tqdm import tqdm
 from data_loading import ds_name_to_subsample
@@ -60,28 +61,85 @@ if __name__ == '__main__':
     del(all_meta_features['combined'])
     db = load_database(args.database)
     baselines = load_database('exp_results/databases/baselines.pkl')
-    baselines = baselines.dropna(axis=1, how='all').dropna() # remove the data sets where baselines failed
-
-    # for ds, data in baselines.groupby('dataset'):
-    #     best_m = data.sort_values('accuracy').iloc[-1]
-    #     best_m2 = db[(db['dataset'] == ds) & (db['environment'] == best_m['environment'])].sort_values('accuracy').iloc[-1]
-    #     print(f'{ds:<50} {best_m["model"]:<5} ACC {best_m["accuracy"]:4.2f} PWR {best_m["power_draw"] + best_m["train_power_draw"]:8.2f}   {best_m2["model"]:<5} ACC {best_m2["accuracy"]:4.2f} PWR {best_m2["power_draw"] + best_m2["train_power_draw"]:8.2f}')
-
     db['environment'] = db['environment'].map(lambda v: v.split(' - ')[0])
     baselines['environment'] = baselines['environment'].map(lambda v: v.split(' - ')[0])
-    meta = load_meta()
-    rated_db, bounds, _, _ = rate_database(db, meta)
-    index_db = prop_dict_to_val(rated_db, 'index')
+    env_cols = {env: RATING_COLORS[idx] for idx, env in enumerate(pd.unique(db['environment']))}
+    meta_info = load_meta()
+    meta_res_path = os.path.join('exp_results', 'meta_learning')
+    meta_results = { fname[:-4]: pd.read_pickle(os.path.join(meta_res_path, fname)) for fname in os.listdir(meta_res_path) }
 
-    col_short = {col: p_meta['shortname'] for col, p_meta in meta['properties'].items()}
+    os.chdir('paper_results')
+    ####### DUMMY OUTPUT - for setting up pdf export of plotly
+    fig = px.scatter(x=[0, 1, 2], y=[0, 1, 4])
+    fig.write_image("dummy.pdf")
+    time.sleep(0.5)
+    os.remove("dummy.pdf")
+
+    ####### BASELINE COMPARISONS
+    baseline_results = {mod: {'ene': [], 'acc': [], 'env': [], 'n': []} for mod in ['OURS'] + list(pd.unique(baselines['model']))}
+    baseline_results['OURS']['n'] = [200]
+    for (env, mod), data in baselines.groupby(['environment', 'model']):
+        if env not in baseline_results[mod]['env']:
+            res_ene, res_acc = [], []
+            for ds in pd.unique(db['dataset']):
+                rel_rows = db[(db['environment'] == env) & (db['dataset'] == ds)].index
+                best_estimated = meta_results['combined'].loc[rel_rows,('use_env__index', 'compound_index_test_pred')].astype(float).idxmax()
+                baseline_results['OURS']['ene'].append(db.loc[best_estimated,['train_power_draw', 'power_draw']].sum())
+                baseline_results['OURS']['acc'].append(db.loc[best_estimated,'accuracy'])
+                baseline_results['OURS']['env'].append(env)
+        bl = data[['train_power_draw', 'power_draw', 'accuracy']].dropna()
+        baseline_results[mod]['n'].append( bl.shape[0] )
+        if bl.size > 0:
+            baseline_results[mod]['ene'] = baseline_results[mod]['ene'] + list(bl[['train_power_draw', 'power_draw']].sum(axis=1).values)
+            baseline_results[mod]['acc'] = baseline_results[mod]['acc'] + list(bl['accuracy'].values)
+            baseline_results[mod]['env'] = baseline_results[mod]['env'] + [env] * bl.shape[0]
+    fig = make_subplots(rows=1, cols=2, shared_yaxes=True, horizontal_spacing=0.01)
+    for idx, (mod, results) in enumerate( baseline_results.items() ):
+        mod_name = f'{mod} (N={int(np.mean(results["n"]))})'
+        fig.add_trace(go.Box(x=results['ene'], y=results['env'], name=mod_name, legendgroup=mod_name, marker_color=RATING_COLORS[idx]), row=1, col=1)
+        fig.add_trace(go.Box(x=results['acc'], y=results['env'], name=mod_name, legendgroup=mod_name, marker_color=RATING_COLORS[idx], showlegend=False), row=1, col=2)
+    fig.update_layout(boxmode='group', width=PLOT_WIDTH, height=PLOT_HEIGHT*1.3, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
+                      legend=dict(orientation="h", yanchor="top", y=1.15, xanchor="center", x=0.5))
+    fig.update_traces(orientation='h')
+    fig.update_xaxes(type="log", title='Energy Draw [Ws]', row=1, col=1)
+    fig.update_xaxes(title='Accuracy [%]', row=1, col=2)
+    fig.show()
+    fig.write_image(f'baseline_comparisons.pdf')
+
+
+    rated_db, bounds, _, _ = rate_database(db, meta_info)
+    index_db = prop_dict_to_val(rated_db, 'index')
+    col_short = {col: p_meta['shortname'] for col, p_meta in meta_info['properties'].items()}
     star_cols = list(col_short.keys()) + [list(col_short.keys())[0]]
     star_cols_short = [col_short[col] for col in star_cols]
     model_colors = {mod:col for mod, col in zip(pd.unique(db['model']), ['rgb(84, 84, 107)', RATING_COLORS[1], RATING_COLORS[2], 'rgb(48, 155, 137)', RATING_COLORS[3], RATING_COLORS[0], 'rgb(85, 48, 155)', RATING_COLORS[4], 'rgb(155, 48, 78)', 'rgb(84, 107, 95)'])}
 
+    objectives = list(zip(['accuracy', 'train_power_draw', 'compound_index'], ['Most accurate', 'Lowest energy', 'Best trading']))
+    fig = make_subplots(rows=len(objectives), cols=len(env_cols), shared_yaxes=True, shared_xaxes=True, horizontal_spacing=0.01, vertical_spacing=0.01, subplot_titles=list(env_cols.keys()))
+    for row_idx, (sort_col, text) in enumerate(objectives):
+        for col_idx, env in enumerate( env_cols.keys() ):
+            true_best = index_db[index_db['environment'] == env].sort_values(['dataset', sort_col], ascending=False).groupby('dataset').first()['model'].values
+            pred_best = []
+            for ds in pd.unique(db['dataset']):
+                rel_rows = db[(db['environment'] == env) & (db['dataset'] == ds)].index
+                pred = meta_results['combined'].loc[rel_rows,('use_env__index', [f'{sort_col}_test_pred', 'compound_index_test_pred'])].astype(float)
+                best_estimated = pred.sort_values([('use_env__index', f'{sort_col}_test_pred'), ('use_env__index','compound_index_test_pred')]).iloc[-1].name
+                pred_best.append(db.loc[best_estimated,'model'])
+            for bar_idx, (models, name) in enumerate(zip([true_best, pred_best], ['True best', 'Pred best'])):
+                mods, counts = np.unique(models, return_counts=True)
+                all_mod_counts = {mod: 0 for mod in model_colors.keys()}
+                for mod, cnt in zip(mods, counts):
+                    all_mod_counts[mod] = cnt
+                fig.add_trace(go.Bar(x=list(all_mod_counts.keys()), y=list(all_mod_counts.values()), marker_color=RATING_COLORS[bar_idx*2], name=name, showlegend=row_idx+col_idx==0), row=row_idx+1, col=col_idx+1)
+        fig.update_yaxes(title=text, row=row_idx+1, col=1)
+    fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT*1.8, margin={'l': 0, 'r': 0, 'b': 0, 't': 18},
+                      legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5))
+    fig.show()
+    fig.write_image(f'optimal_model_choice.pdf')
 
 
     # collect differences across environments
-    avg_dist = {col: [] for col in meta['properties'].keys()}
+    avg_dist = {col: [] for col in meta_info['properties'].keys()}
     mod_ds_mean_std, mod_ds_acc_std = [], []
     for (ds, model), data in index_db.groupby(['dataset', 'model']):
         for col in avg_dist.keys():
@@ -91,50 +149,61 @@ if __name__ == '__main__':
             mod_ds_mean_std.append( (np.mean([val[-1] for val in avg_dist.values() ]), (ds, model)) )
     for val, (ds, model) in sorted(mod_ds_acc_std)[-10:]:
         print(f'{ds:<80} {model:<10} {val:5.3f}')
-    MOD_DISP_IMPORT = sorted(mod_ds_mean_std) + [sorted(mod_ds_acc_std)[-1]]
-    print(MOD_DISP_IMPORT[-1])
-    DS_SEL = MOD_DISP_IMPORT[-1][1][0]
-    MOD_SEL = MOD_DISP_IMPORT[-3:]
-
-    meta_res_path = os.path.join('exp_results', 'meta_learning')
-    meta_results = { fname[:-4]: pd.read_pickle(os.path.join(meta_res_path, fname)) for fname in os.listdir(meta_res_path) }
+    MOD_DISP_IMPORT = sorted(mod_ds_mean_std)
+    DS_SEL = 'credit-g'
+    MOD_SEL = [('credit-g', 'SGD'), ('lung_cancer', 'XRF'), ('SpeedDating', 'AB')]
 
 
-    ##########################     PLOT FIGURES     ##########################
-            
-    os.chdir('paper_results')
-    ####### DUMMY OUTPUT - for setting up pdf export of plotly
-    fig = px.scatter(x=[0, 1, 2], y=[0, 1, 4])
-    fig.write_image("dummy.pdf")
-    time.sleep(0.5)
-    os.remove("dummy.pdf")
+    # ##### VIOLIN of standard devs across environments
+    fig = go.Figure()
+    mean_std = [np.mean(std) for std in avg_dist.values()]
+    mean_std = (mean_std - min(mean_std)) / (max(mean_std) - min(mean_std))
+    colors = sample_colorscale(colorscale=RATING_COLOR_SCALE, samplepoints=mean_std)
+    for color, (col, std_devs) in zip(colors, avg_dist.items()):
+        fig.add_trace( go.Box(y=std_devs, x=[meta_info['properties'][col]["shortname"]] * len(std_devs), marker_color=color, showlegend=False) )
+    fig.update_layout(width=PLOT_WIDTH * 0.38, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
+    fig.update_yaxes(title='Std devs across environments' )
+    fig.show()
+    fig.write_image('property_std_distrib.pdf')
+
+
+    ####### SCATTER landscapes for a single data set
+    ds_sub_db = rated_db[rated_db['dataset'] == DS_SEL]
+    for scale, scale_name in zip(['index', 'value'], ['Index Scale', 'Value Scale']):
+        plot_data, axis_names, rating_pos = assemble_scatter_data(['Intel i9-13900K', 'ARMv8 rev 1 (v8l)'], ds_sub_db, scale, 'train_power_draw', 'accuracy', meta_info, bounds)
+        scatter = create_scatter_graph(plot_data, axis_names, dark_mode=False, marker_width=5)
+        add_rating_background(scatter, None, None if scale == 'index' else 'FLIP_LEFT_RIGHT')
+        scatter.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
+                              legend=dict(yanchor="bottom", y=0.05, xanchor="center", x=0.5), showlegend=scale=='value')
+        scatter.show()
+        scatter.write_image(f"scatter_{scale}.pdf")
 
     # TABLE COMPARISON WITH BASELINE
-    env_results = {env: [] for env in pd.unique(rated_db['environment'])}
-    for (ds, task, env), subdata in rated_db.groupby(['dataset', 'task', 'environment']):
-        bl = baselines[(baselines['dataset'] == ds) & (baselines['environment'] == env) & (baselines['model'] == 'PFN16')]
-        if bl.shape[0] > 0:
-            pred = meta_results['combined'].loc[subdata.index]
-            pred_best = pred.loc[:,(f'use_env__index')].sort_values('compound_index_test_pred', ascending=False).index[0]
-            actual_best = subdata.sort_values('compound_index', ascending=False).index[0]
-            env_results[env].append([
-                db.loc[pred_best]['accuracy'], # ours acc
-                db.loc[pred_best][['power_draw', 'train_power_draw']].sum(), # ours power
-                bl.iloc[0]['accuracy'].sum(), # baseline acc
-                bl.iloc[0][['power_draw', 'train_power_draw']].sum() # baseline power
-            ])
-    tex_rows = [
-        r'Environment & \multicolumn{2}{c}{Our method} & \multicolumn{2}{c}{TabPFN} \\',
-        r'& Accuracy [%] & Power Draw [Ws] & Accuracy [%] & Power Draw [Ws] \\',
-        r'\midrule'
-    ]
-    for env, results in env_results.items():
-        env_mean, env_std = np.array(results).mean(axis=0), np.array(results).std(axis=0)
-        tex_rows.append( ' & '.join([env] + [f'{mean:5.2f} ($\pm${std:5.2f})' for mean, std in zip(env_mean, env_std)]) + r' \\')
-    final_text = TEX_TABLE_GENERAL.replace('$DATA', '\n        '.join(tex_rows)).replace('$ALIGN', r'{c|cc|cc}')
-    final_text = final_text.replace('%', r'\%').replace('#', r'\#').replace("µ", r"$\mu$")
-    with open('baseline_comparison.tex', 'w') as outf:
-        outf.write(final_text)
+    # env_results = {env: [] for env in pd.unique(rated_db['environment'])}
+    # for (ds, task, env), subdata in rated_db.groupby(['dataset', 'task', 'environment']):
+    #     bl = baselines[(baselines['dataset'] == ds) & (baselines['environment'] == env) & (baselines['model'] == 'PFN16')]
+    #     if bl.shape[0] > 0:
+    #         pred = meta_results['combined'].loc[subdata.index]
+    #         pred_best = pred.loc[:,(f'use_env__index')].sort_values('compound_index_test_pred', ascending=False).index[0]
+    #         actual_best = subdata.sort_values('compound_index', ascending=False).index[0]
+    #         env_results[env].append([
+    #             db.loc[pred_best]['accuracy'], # ours acc
+    #             db.loc[pred_best][['power_draw', 'train_power_draw']].sum(), # ours power
+    #             bl.iloc[0]['accuracy'].sum(), # baseline acc
+    #             bl.iloc[0][['power_draw', 'train_power_draw']].sum() # baseline power
+    #         ])
+    # tex_rows = [
+    #     r'Environment & \multicolumn{2}{c}{Our method} & \multicolumn{2}{c}{TabPFN} \\',
+    #     r'& Accuracy [%] & Power Draw [Ws] & Accuracy [%] & Power Draw [Ws] \\',
+    #     r'\midrule'
+    # ]
+    # for env, results in env_results.items():
+    #     env_mean, env_std = np.array(results).mean(axis=0), np.array(results).std(axis=0)
+    #     tex_rows.append( ' & '.join([env] + [f'{mean:5.2f} ($\pm${std:5.2f})' for mean, std in zip(env_mean, env_std)]) + r' \\')
+    # final_text = TEX_TABLE_GENERAL.replace('$DATA', '\n        '.join(tex_rows)).replace('$ALIGN', r'{c|cc|cc}')
+    # final_text = final_text.replace('%', r'\%').replace('#', r'\#').replace("µ", r"$\mu$")
+    # with open('baseline_comparison.tex', 'w') as outf:
+    #     outf.write(final_text)
     
 
     # BEST METHOD PERFORMANCE ON EACH DATA SET
@@ -165,9 +234,9 @@ if __name__ == '__main__':
     #     outf.write(final_text)
         
     # ####### STAR PLOTS for the biggest performance differences
-    fig = make_subplots(rows=1, cols=len(MOD_SEL), specs=[[{'type': 'polar'}, {'type': 'polar'}, {'type': 'polar'}]], subplot_titles=[f'{mod} on {ds if len(ds) < 20 else ds[:20] + ".."}' for _, (ds, mod) in MOD_SEL])
-    for idx, (_, (ds, mod)) in enumerate(MOD_SEL):
-        for e_idx, env in enumerate(pd.unique(index_db['environment'])):
+    fig = make_subplots(rows=1, cols=len(MOD_SEL), specs=[[{'type': 'polar'}, {'type': 'polar'}, {'type': 'polar'}]], subplot_titles=[f'{mod} on {ds if len(ds) < 10 else ds[:10] + ".."}' for ds, mod in MOD_SEL])
+    for idx, (ds, mod) in enumerate(MOD_SEL):
+        for e_idx, env in enumerate(env_cols.keys()):
             subdb = index_db[(index_db['dataset'] == ds) & (index_db['model'] == mod) & (index_db['environment'] == env)].iloc[0]
             fig.add_trace(go.Scatterpolar(
                 r=[subdb[col] for col in star_cols], line={'color': RATING_COLORS[e_idx]}, fillcolor=rgb_to_rgba(RATING_COLORS[e_idx], 0.1),
@@ -183,8 +252,8 @@ if __name__ == '__main__':
     
     # ERRORS ACROSS PROPERTIES
     traces, titles = [], []
-    for idx, (prop, prop_meta) in enumerate(meta['properties'].items()):
-        row, col = 2 if idx >= len(meta['properties']) / 2 else 1, int(idx % (len(meta['properties']) / 2)) + 1
+    for idx, (prop, prop_meta) in enumerate(meta_info['properties'].items()):
+        row, col = 2 if idx >= len(meta_info['properties']) / 2 else 1, int(idx % (len(meta_info['properties']) / 2)) + 1
         for e_idx, (env_info, scale) in enumerate( [('use_env', 'rec_index'), ('use_env', 'value')] ):
             res = meta_results['combined'].xs(f'{env_info}__{scale}', level=0, axis=1)[f'{prop}_test_err']
             _, to_unit = formatter.reformat_value(res.iloc[0], prop_meta['unit'])
@@ -193,12 +262,12 @@ if __name__ == '__main__':
             traces.append( (row, col, go.Box(name=trace, y=reformatted, legendgroup=trace, showlegend=idx==0, marker_color=color)) )
             if e_idx == 0:
                 titles.append(f"{prop_meta['shortname']} {to_unit}")
-    fig = make_subplots(rows=2, cols=int(len(meta['properties']) / 2), subplot_titles=titles, vertical_spacing=0.1)
+    fig = make_subplots(rows=2, cols=int(len(meta_info['properties']) / 2), subplot_titles=titles, vertical_spacing=0.1)
     for row, col, trace in traces:
         fig.add_trace(trace, row=row, col=col)
         fig.update_xaxes(visible=False, showticklabels=False, row=row, col=col)
     fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 18},
-                      legend=dict(title='Measurement scale:', orientation="h", yanchor="top", y=0, xanchor="center", x=0.5))
+                      legend=dict(title='Learning from scale:', orientation="h", yanchor="top", y=0, xanchor="center", x=0.5))
     # fig.show()
     fig.write_image('errors_across_properties.pdf')
 
@@ -227,30 +296,16 @@ if __name__ == '__main__':
     # fig.show()
     fig.write_image('ds_embeddings.pdf')
 
-    ####### SCATTER landscapes for a single data set
-    ds_sub_db = rated_db[rated_db['dataset'] == DS_SEL]
-    for scale, scale_name in zip(['index', 'value'], ['Index Scale', 'Value Scale']):
-        plot_data, axis_names, rating_pos = assemble_scatter_data(pd.unique(ds_sub_db['environment']).tolist(), ds_sub_db, scale, 'running_time', 'accuracy', meta, bounds)
-        scatter = create_scatter_graph(plot_data, axis_names, dark_mode=False, marker_width=8)
-        add_rating_background(scatter, None, None if scale == 'index' else 'FLIP_LEFT_RIGHT')
-        scatter.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
-                              legend=dict(yanchor="bottom", y=0.05, xanchor="center", x=0.5), showlegend=scale=='value')
-        scatter.show()
-        scatter.write_image(f"scatter_{scale}.pdf")
-
-    # ##### VIOLIN of standard devs across environments
-    fig = go.Figure()
-    for col, std_devs in avg_dist.items():
-        fig.add_trace( go.Violin(y=std_devs, x=[col] * len(std_devs), spanmode='hard', meanline_visible=True, showlegend=False) )
-    fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
-    # fig.show()
-    fig.write_image('property_std_distrib.pdf')
 
     
 
 
 ###### TODO
 
+    # CRIT DIFF DIAGRAM for compound, power, acc, maybe getrennt für training / inferenz?
+
     # IMPACT OF ENVIRONMENT FEATURES
     # IMPACT OF INDEX SCALING
     # => on PREDICTION QUALITY
+
+    # check how recommendations change when using different weights
