@@ -2,6 +2,8 @@ import argparse
 import os
 
 import pandas as pd
+import numpy as np
+from sklearn.impute import KNNImputer
 
 from strep.load_experiment_logs import assemble_database
 from strep.util import format_software, format_hardware
@@ -52,9 +54,16 @@ if __name__ == "__main__":
 
     dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname not in ['complete.pkl', 'baselines.pkl', 'subset.pkl']]
     complete = pd.concat(dbs).reset_index()
+    # for some weird outlier cases (< 4%), codecarbon logged extreeemely high and unreasonable consumed energy (in the thousands and even millions of Watt)
+    # we discard these outliers (assuming a max draw of 400 Watt) and do a simple kNN gap filling
+    complete.loc[complete['train_power_draw'] / complete['train_running_time'] > 400,'train_power_draw'] = np.nan
+    complete.loc[complete['power_draw'] / complete['running_time'] > 400,'power_draw'] = np.nan
+    imputer = KNNImputer(n_neighbors=10, weights="uniform")
+    numeric = complete.select_dtypes('number').columns
+    complete.loc[:,numeric] = imputer.fit_transform(complete[numeric])
+    
     baselines = complete[complete['model'].isin(['PFN', 'AGL', 'NAM', 'PFN4', 'PFN16', 'PFN64', 'PFN32'])]
     complete = complete.drop(baselines.index, axis=0)
-
     baselines.reset_index().to_pickle(os.path.join(args.db_dir, f'baselines.pkl'))
     complete.reset_index().to_pickle(os.path.join(args.db_dir, f'complete.pkl'))
 
