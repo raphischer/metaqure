@@ -157,7 +157,7 @@ if __name__ == '__main__':
                         regr_results = {}
                         for regr in REGRESSORS.keys():
                             res = evaluate_regressor(regr, opt_find_db[cols], opt_find_db[col], opt_find_cv_splits, args.seed)
-                            if scale == 'index': # make the selection based on REAL measurements
+                            if scale == 'index': # make the selection based on MAE of REAL measurements
                                 res = recalculate_original_values(res, col, db, value_db, col_meta)
                             regr_results[regr] = res
                         sorted_results = list(sorted([(res['test_err'].abs().mean(), regr) for regr, res in regr_results.items()]))
