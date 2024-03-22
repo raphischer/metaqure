@@ -109,7 +109,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Classification training with Tensorflow, based on PyTorch training")
     # data and model input
     parser.add_argument("--data-home", default="/data/d1/sus-meta-results/data")
-    parser.add_argument("--ds", default="breast_cancer")
+    parser.add_argument("--ds", default="lung_cancer")
     parser.add_argument("--subsample", default=None)
     parser.add_argument("--method", default="RF")
     parser.add_argument("--n-jobs", default=-1)

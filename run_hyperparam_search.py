@@ -15,11 +15,11 @@ from data_loading import data_variant_loaders
 from methods import CLSF, get_budget
 
 
-def hyperparam_fname(ds_name, method, outdir='./hyperparameters'):
+def hyperparam_fname(ds_name, method, outdir='./exp_results/hyperparameters'):
     return os.path.join(outdir, f'hyperparameters__{ds_name}__{method.replace(" ", "_")}.json')
 
 
-def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir, hyperdir='./hyperparameters'):
+def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir):
     if method == 'PFN': # use PFN baseline model
         from tabpfn import TabPFNClassifier
         return (None, TabPFNClassifier(device='cpu', seed=seed), None, lambda m: np.nan), np.nan
@@ -33,7 +33,7 @@ def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir, hyperd
     if method == 'ASK':
         clf[1].set_params(**{'time_left_for_this_task': max(get_budget(output_dir, ds_name), 30), 'seed': seed})#, 'n_jobs': args.n_jobs})#, 'metric': 'accuracy'})
 
-    fname = hyperparam_fname(ds_name, method, hyperdir)
+    fname = hyperparam_fname(ds_name, method)
     try:
         with open(fname, 'r') as hyperf:
             hyper_content = json.load(hyperf)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     variant_loaders = data_variant_loaders(args.ds, args.data_home, args.seed, args.subsample)
     for ds_variant in variant_loaders:
         X, _, y, _, _, ds_name = ds_variant()
-        outfile = hyperparam_fname(ds_name, args.method, 'hyperparameters_new')
+        outfile = hyperparam_fname(ds_name, args.method)
         print(f'Searching hyperparameters for {outfile}')
         custom_hyperparam_search(args.method, X, y, outfile, args.n_iter, args.time_budget, args.seed, args.multiprocess)    
 
