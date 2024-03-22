@@ -146,9 +146,9 @@ if __name__ == '__main__':
                 db['model_enc'] = LabelEncoder().fit_transform(db['model'].values)
                 db['environment_enc'] = LabelEncoder().fit_transform(db['environment'].values)
                 # prepare grouped cross-validation
-                cv_splits = ds_cv_split(db['dataset'])
+                cv_splits = ds_cv_split(db['dataset'], n_splits=5)
                 opt_find_db = db.iloc[cv_splits[0][0]] # first cv train split used for finding optimal model choice
-                opt_find_cv_splits = ds_cv_split(opt_find_db['dataset'])
+                opt_find_cv_splits = ds_cv_split(opt_find_db['dataset'], n_splits=5)
                 for use_env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
                     print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {use_env} \n')
                     compound_col_res_idc = {}
