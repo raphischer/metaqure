@@ -55,7 +55,7 @@ if __name__ == "__main__":
     dbs = [pd.read_pickle(os.path.join(args.db_dir, fname)) for fname in os.listdir(args.db_dir) if '.pkl' in fname and fname not in ['complete.pkl', 'baselines.pkl', 'subset.pkl']]
     complete = pd.concat(dbs)
     complete['parameters'] = complete['parameters'].fillna(0) # nan parameters are okay (occurs for PFN)
-    complete = complete.dropna().reset_index() # get rid of failed PFN evals
+    complete = complete.dropna().reset_index(drop=True) # get rid of failed PFN evals
     # for some weird outlier cases (< 4%), codecarbon logged extreeemely high and unreasonable consumed energy (in the thousands and even millions of Watt)
     # we discard these outliers (assuming a max draw of 400 Watt) and do a simple kNN gap filling
     complete.loc[complete['train_power_draw'] / complete['train_running_time'] > 400,'train_power_draw'] = np.nan
@@ -66,8 +66,8 @@ if __name__ == "__main__":
     
     baselines = complete[complete['model'].isin(['PFN', 'AGL', 'NAM', 'PFN4', 'PFN16', 'PFN64', 'PFN32'])]
     complete = complete.drop(baselines.index, axis=0)
-    baselines.reset_index().to_pickle(os.path.join(args.db_dir, f'baselines.pkl'))
-    complete.reset_index().to_pickle(os.path.join(args.db_dir, f'complete.pkl'))
+    baselines.reset_index(drop=True).to_pickle(os.path.join(args.db_dir, f'baselines.pkl'))
+    complete.reset_index(drop=True).to_pickle(os.path.join(args.db_dir, f'complete.pkl'))
 
     subset = complete[complete['dataset'].isin(pd.unique(complete['dataset'])[5:15].tolist() + ['credit-g'])]
-    subset.reset_index().to_pickle(os.path.join(args.db_dir, f'subset.pkl'))
+    subset.reset_index(drop=True).to_pickle(os.path.join(args.db_dir, f'subset.pkl'))
