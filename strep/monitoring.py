@@ -43,7 +43,8 @@ class JetsonMonitor:
                 if start_failed > 10:
                     sys.exit(1)
         self.stopper = Event()
-        time.sleep(1)
+        self.jetson.ok()
+        time.sleep(0.5)
         self.p = Process(target=monitor_jetson, args=(self.jetson, interval, outfile, self.stopper))
         self.p.start()
 
@@ -84,7 +85,7 @@ def monitor_jetson(jetson, interval, logfile, stopper):
             jstr_parts.append(np.mean(val))
         else:
             jstr_parts[2] += np.mean(val)
-    jstr_parts[1] = np.mean(jetson_entries['power_total_power']) * 1000 * jstr_parts[0] # milliwatt to watt to Wattseconds
+    jstr_parts[1] = np.mean(jetson_entries['power_total_power']) * jstr_parts[0] / 3.6e9 # milliwatt to mWs to kWh
     with open(logfile, 'a') as outf:
         outf.write(header)
         outf.write(','.join([str(part) for part in jstr_parts]) + '\n')

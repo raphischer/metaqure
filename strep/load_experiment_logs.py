@@ -23,6 +23,12 @@ def read_log_directory(directory):
         reader_method = f'read_{ext[1:]}'
         if reader_method in reader_methods:
             res[fbase] = reader_methods[reader_method](os.path.join(directory, filename))
+            # if filename == 'emissions.csv': # error with older jetson logs, remove later
+            #     try:
+            #         res[fbase]['energy_consumed']['0'] /= 3.6e12
+            #         res[fbase]['energy_consumed']['1'] /= 3.6e12
+            #     except KeyError:
+            #         pass
     return res
 
 
