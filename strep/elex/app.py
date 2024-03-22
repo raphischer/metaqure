@@ -214,7 +214,7 @@ class Visualization(dash.Dash):
             try:
                 link = self.state['model']['model']['url']
             except (IndexError, KeyError, TypeError):
-                link = 'https://github.com/raphischer/strep'
+                link = 'https://youtu.be/dQw4w9WgXcQ?si=9Ls8LZR9KolpBT01'
             open = False
         return model_table, metric_table,  enc_label, enc_label, link, open
 
