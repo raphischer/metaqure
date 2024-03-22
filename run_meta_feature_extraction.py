@@ -19,7 +19,7 @@ try:
     from meta_features.pca import extract as pca
     EXTRACTORS = [statistical, pca, ds2vec]
 except ImportError:
-    print('Could not load libraries for calculating new meta-features, but the ones in the repository can be loaded')
+    print('Could not load libraries for calculating new meta-features, but the pre-calculated sets in our repository can be used')
 
 
 def load_meta_features():
