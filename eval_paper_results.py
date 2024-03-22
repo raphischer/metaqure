@@ -12,7 +12,10 @@ from plotly.colors import sample_colorscale, make_colorscale
 from plotly.subplots import make_subplots
 from PIL import Image
 
+from run_meta_feature_extraction import load_meta_features
 from data_loading import ds_name_to_subsample
+from run_meta_learning import ML_RES_DIR
+from run_log_processing import DB_COMPLETE, DB_BL, DB_SUB
 
 from strep.index_and_rate import rate_database, load_database
 from strep.util import load_meta, prop_dict_to_val
@@ -49,16 +52,6 @@ TEX_TABLE_GENERAL = r'''
     \end{tabular}'''
 
 
-def load_meta_features(dirname):
-    meta_features = {}
-    for meta_ft_file in os.listdir(dirname):
-        if not '.csv' in meta_ft_file:
-            continue
-        meta_features[meta_ft_file.replace('.csv', '')] = pd.read_csv(os.path.join(dirname, meta_ft_file)).set_index('Unnamed: 0').fillna(0)
-    meta_features['combined'] = pd.concat(meta_features.values(), axis=1)
-    return meta_features
-
-
 def format_value_for_table(val):
     if val < 1000 and val > 0.01:
         return f'{val:6.3f}'.strip()
@@ -67,30 +60,31 @@ def format_value_for_table(val):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--meta-features-dir", default='meta_features')
-    parser.add_argument("--database", default='exp_results/databases/complete.pkl')
+    parser.add_argument("--database", default='complete')
     args = parser.parse_args()
+    DB = DB_COMPLETE if args.database == 'complete' else DB_SUB
 
-    ########################## PREPARE FOR PLOTTING ##########################
+    ##########################     LOAD RESULTS     ##########################
 
-    all_meta_features = load_meta_features(args.meta_features_dir)
+    all_meta_features = load_meta_features()
     formatter = CustomUnitReformater()
-    db = load_database(args.database)
-    baselines = load_database('exp_results/databases/baselines.pkl')
+    db = load_database(DB)
+    baselines = load_database(DB_BL)
     db['environment'] = db['environment'].map(lambda v: v.split(' - ')[0])
     baselines['environment'] = baselines['environment'].map(lambda v: v.split(' - ')[0])
     env_cols = {env: COL_FIVE[idx] for idx, env in enumerate(['Intel i9-13900K', 'Intel i7-6700', 'Intel i7-10610U', 'ARMv8 rev 1 (v8l)'])}
     meta_info = load_meta()
-    meta_res_path = os.path.join('exp_results', 'meta_learning')
-    meta_results = { fname[:-4]: pd.read_pickle(os.path.join(meta_res_path, fname)) for fname in os.listdir(meta_res_path) }
+    meta_results = { fname[:-4]: pd.read_pickle(os.path.join(ML_RES_DIR, fname)) for fname in os.listdir(ML_RES_DIR) }
+
+    ########################## PREPARE FOR PLOTTING ##########################
+
     objectives = list(zip(['accuracy', 'train_power_draw', 'compound_index'], ['Most accurate', 'Lowest energy', 'Best balanced'], ['O1', 'O2', 'O3']))
     col_short = {col: p_meta['shortname'] for col, p_meta in meta_info['properties'].items()}
     star_cols = list(col_short.keys()) + [list(col_short.keys())[0]]
     star_cols_short = [col_short[col] for col in star_cols]
     model_colors = {mod:col for mod, col in zip(pd.unique(db['model']), COL_TEN)}
+    os.chdir('exp_results/paper_results')
 
-
-    os.chdir('paper_results')
     ####### DUMMY OUTPUT - for setting up pdf export of plotly
     fig = px.scatter(x=[0, 1, 2], y=[0, 1, 4])
     fig.write_image("dummy.pdf")
@@ -143,7 +137,7 @@ if __name__ == '__main__':
     fig.update_xaxes(type="log", title='', row=1, col=1)
     fig.update_xaxes(type="log", title='Energy Draw [Ws]', row=2, col=1)
     fig.update_xaxes(title='Accuracy [%]', row=2, col=2)
-    # fig.show()
+    fig.show()
     fig.write_image(f'baseline_comparisons.pdf')
 
     ####### DS EMBEDDING
@@ -161,7 +155,6 @@ if __name__ == '__main__':
         # add bars for objective errors
         pred_error_mean = [meta_results[key][('use_env__index', f'{col}_test_err')].abs().mean() for col, _, _ in objectives]
         pred_error_stds = [meta_results[key][('use_env__index', f'{col}_test_err')].abs().std() for col, _, _ in objectives]
-        # bar_colors = [RATING_COLORS[4], RATING_COLORS[0], RATING_COLORS[2]]
         fig.add_trace(go.Bar(x=list(zip(*objectives))[2], y=pred_error_mean, marker_color=COL_FIVE[0], showlegend=False), row=2, col=idx+1)
         fig.update_yaxes(range=[0, 0.25], showticklabels=idx==0, row=2, col=idx+1)
     fig.update_yaxes(title='S(a, c) MAE', row=2, col=1)
@@ -174,7 +167,7 @@ if __name__ == '__main__':
         legend=dict(title='# Instances', y=0.5, x=0.5, xanchor='center', yanchor='middle', orientation='h'),
         width=PLOT_WIDTH, height=PLOT_HEIGHT*1.5, margin={'l': 0, 'r': 0, 'b': 0, 't': 18}
     )
-    # fig.show()
+    fig.show()
     fig.write_image(f'ds_embeddings.pdf')
 
     # PLOTS THAT REQUIRE RATED DB
@@ -202,7 +195,7 @@ if __name__ == '__main__':
             fig.update_yaxes(type="log", row=row, col=col) 
     fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT*1.3, margin={'l': 57, 'r': 0, 'b': 0, 't': 18},
                       legend=dict(title='Meta-learning from values on scale:', orientation="h", yanchor="top", y=-0.02, xanchor="center", x=0.5))
-    # fig.show()
+    fig.show()
     fig.write_image('errors_across_properties.pdf')
     
     ########### OTPIMAL MODEL CHOICE
@@ -224,7 +217,7 @@ if __name__ == '__main__':
         fig.update_yaxes(title=text, row=row_idx+1, col=1)
     fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT*1.8, margin={'l': 0, 'r': 0, 'b': 0, 't': 18},
                       legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5))
-    # fig.show()
+    fig.show()
     fig.write_image(f'optimal_model_choice.pdf')
 
 
@@ -300,6 +293,29 @@ if __name__ == '__main__':
     scatter.show()
     scatter.write_image(f"scatter.pdf")
 
+    # ####### STAR PLOTS for the biggest performance differences
+    fig = make_subplots(rows=1, cols=len(MOD_SEL), specs=[[{'type': 'polar'}, {'type': 'polar'}, {'type': 'polar'}]], subplot_titles=[f'{mod} on {ds if len(ds) < 15 else ds[:15] + ".."}' for ds, mod in MOD_SEL])
+    for idx, (ds, mod) in enumerate(MOD_SEL):
+        for e_idx, env in enumerate(env_cols.keys()):
+            subdb = index_db[(index_db['dataset'] == ds) & (index_db['model'] == mod) & (index_db['environment'] == env)].iloc[0]
+            fig.add_trace(go.Scatterpolar(
+                r=[subdb[col] for col in star_cols], line={'color': COL_FIVE[e_idx]}, fillcolor=rgb_to_rgba(COL_FIVE[e_idx], 0.1),
+                theta=star_cols_short, fill='toself', name=env, showlegend=idx==0
+            ), row=1, col=idx+1)
+    fig.update_annotations(yshift=20)
+    fig.update_layout(
+        polar=dict(radialaxis=dict(visible=True)), width=PLOT_WIDTH, height=PLOT_HEIGHT,
+        legend=dict( yanchor="top", y=-0.1, xanchor="center", x=0.5, orientation='h'), margin={'l': 0, 'r': 0, 'b': 0, 't': 40}
+    )
+    fig.show()
+    fig.write_image(f'star_differences.pdf')
+        
+
+
+
+
+
+
     # TABLE COMPARISON WITH BASELINE
     # env_results = {env: [] for env in pd.unique(rated_db['environment'])}
     # for (ds, task, env), subdata in rated_db.groupby(['dataset', 'task', 'environment']):
@@ -354,25 +370,6 @@ if __name__ == '__main__':
     # final_text = final_text.replace('%', r'\%').replace('#', r'\#').replace("µ", r"$\mu$")
     # with open('meta_learn_errors.tex', 'w') as outf:
     #     outf.write(final_text)
-        
-    # ####### STAR PLOTS for the biggest performance differences
-    fig = make_subplots(rows=1, cols=len(MOD_SEL), specs=[[{'type': 'polar'}, {'type': 'polar'}, {'type': 'polar'}]], subplot_titles=[f'{mod} on {ds if len(ds) < 15 else ds[:15] + ".."}' for ds, mod in MOD_SEL])
-    for idx, (ds, mod) in enumerate(MOD_SEL):
-        for e_idx, env in enumerate(env_cols.keys()):
-            subdb = index_db[(index_db['dataset'] == ds) & (index_db['model'] == mod) & (index_db['environment'] == env)].iloc[0]
-            fig.add_trace(go.Scatterpolar(
-                r=[subdb[col] for col in star_cols], line={'color': COL_FIVE[e_idx]}, fillcolor=rgb_to_rgba(COL_FIVE[e_idx], 0.1),
-                theta=star_cols_short, fill='toself', name=env, showlegend=idx==0
-            ), row=1, col=idx+1)
-    fig.update_annotations(yshift=20)
-    fig.update_layout(
-        polar=dict(radialaxis=dict(visible=True)), width=PLOT_WIDTH, height=PLOT_HEIGHT,
-        legend=dict( yanchor="top", y=-0.1, xanchor="center", x=0.5, orientation='h'), margin={'l': 0, 'r': 0, 'b': 0, 't': 40}
-    )
-    fig.show()
-    fig.write_image(f'star_differences.pdf')
-        
-
 
 ###### TODO
 

@@ -12,8 +12,7 @@ from sklearn.model_selection import ParameterSampler, RandomizedSearchCV, cross_
 
 from strep.util import write_json
 from data_loading import data_variant_loaders
-from methods import CLSF
-from baseline_budgets import get_budget
+from methods import CLSF, get_budget
 
 
 def hyperparam_fname(ds_name, method, outdir='./hyperparameters'):

@@ -5,7 +5,6 @@ warnings.warn = warn
 
 import argparse
 import os
-from itertools import product
 
 import pandas as pd
 import numpy as np
@@ -21,10 +20,12 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.svm import LinearSVR, SVR
 from sklearn.tree import DecisionTreeRegressor
 
-from data_loading import ds_cv_split
 from strep.index_and_rate import rate_database, load_database, index_to_value, calculate_single_compound_rating
 from strep.util import load_meta, prop_dict_to_val
 
+from run_meta_feature_extraction import load_meta_features
+from data_loading import ds_cv_split
+from run_log_processing import DB_COMPLETE
 
 SCORING = {
     'MAE': mean_absolute_error,
@@ -32,12 +33,12 @@ SCORING = {
 }
 CV_SCORER = 'test_MAE'
 
-
 ENCODERS = {
     'num': lambda config: Pipeline(steps=[ ('scaler', StandardScaler()) ]),
     'cat': lambda config: Pipeline(steps=[ ('onehot', OneHotEncoder(drop=config[0], categories=config[1])) ])
 }
 
+ML_RES_DIR = os.path.join('exp_results', 'meta_learning')
 
 REGRESSORS = {
     'Global Mean':              (DummyRegressor, {}),
@@ -105,28 +106,15 @@ def recalculate_original_values(results, col, index_db, value_db, col_meta):
     return recalc_results
 
 
-def load_meta_features(dirname):
-    meta_features = {}
-    for meta_ft_file in os.listdir(dirname):
-        if not '.csv' in meta_ft_file:
-            continue
-        meta_features[meta_ft_file.replace('.csv', '')] = pd.read_csv(os.path.join(dirname, meta_ft_file)).fillna(0).set_index('Unnamed: 0')
-    meta_features['combined'] = pd.concat(meta_features.values(), axis=1)
-    return meta_features
-
-
 def error_info_as_string(row, col):
     return ' - '.join([f'{c.replace(f"{col}_", "")}: {row[c].abs().mean():10.6f} +- {row[c].abs().std():10.2f}' for c in row.columns if 'err' in c])
 
 
-DB = 'exp_results/databases/complete.pkl'
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--meta-features-dir", default='meta_features')
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     args = parser.parse_args()
-    all_meta_features = load_meta_features(args.meta_features_dir)
+    all_meta_features = load_meta_features()
     meta = load_meta()
     weights = {col: val['weight'] for col, val in meta['properties'].items()}
 
@@ -134,7 +122,7 @@ if __name__ == '__main__':
         for ft_name, meta_features in all_meta_features.items():
             # load meta features and database        
             meta_ft_cols = list(meta_features.columns) + ['model_enc']
-            database = load_database(DB)
+            database = load_database(DB_COMPLETE)
             rated_db = rate_database(database, meta, indexmode='best')[0]
             index_db, value_db = prop_dict_to_val(rated_db, 'index'), prop_dict_to_val(rated_db, 'value')
             all_results, result_cols = [], []
@@ -188,6 +176,5 @@ if __name__ == '__main__':
                         all_results.append(index_pred)
                         result_cols.append(f'{use_env}__index')
 
-
             final_results = pd.concat(all_results, keys=result_cols, axis=1)
-            final_results.to_pickle(os.path.join('exp_results', 'meta_learning', f'{ft_name}.pkl'))
+            final_results.to_pickle(os.path.join(ML_RES_DIR, f'{ft_name}.pkl'))

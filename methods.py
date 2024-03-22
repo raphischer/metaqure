@@ -11,7 +11,17 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTr
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 
+from strep.util import read_json, write_json, format_hardware
+
 from data_loading import load_data
+
+BUDGET_FILE = 'exp_results/budget.json'
+
+def get_budget(output_dir, ds, min_time=5):
+    architecture = format_hardware(read_json(os.path.join(output_dir, 'execution_platform.json'))['Processor'])
+    budgets = read_json(BUDGET_FILE)
+    return max(int(budgets[architecture][ds]), min_time)
+
 
 CLSF = {
     "kNN": (
