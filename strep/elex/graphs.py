@@ -41,7 +41,7 @@ def add_rating_background(fig, rating_pos, mode=None, dark_mode=None):
     min_x, max_x, min_y, max_y = fig.layout.xaxis.range[0], fig.layout.xaxis.range[1], fig.layout.yaxis.range[0], fig.layout.yaxis.range[1]
     if rating_pos is None:
         grad = GRAD if mode is None else GRAD.transpose(getattr(Image, mode))
-        fig.add_layout_image(dict(source=grad, xref="x", yref="y", x=min_x, y=max_y, sizex=max_x-min_x, sizey=max_y-min_y, sizing="stretch", opacity=0.75, layer="below"))
+        fig.add_layout_image(dict(source=grad, xref="x", yref="y", x=min_x, y=max_y, sizex=max_x-min_x, sizey=max_y-min_y, sizing="stretch", opacity=0.5, layer="below"))
     else:
         for xi, (x0, x1) in enumerate(rating_pos[0]):
             x0 = max_x if xi == 0 else x0
@@ -56,7 +56,9 @@ def add_rating_background(fig, rating_pos, mode=None, dark_mode=None):
                     fig.add_shape(type="rect", layer='below', fillcolor=color, x0=x0, x1=x1, y0=y0, y1=y1, opacity=.8)
 
 
-def create_scatter_graph(plot_data, axis_title, dark_mode, ax_border=0.1, marker_width=15, norm_colors=True, display_text=True):
+def create_scatter_graph(plot_data, axis_title, dark_mode, ax_border=0.1, marker_width=15, norm_colors=True, display_text=True, color_scale=None):
+    if color_scale is None:
+        color_scale = RATING_COLOR_SCALE
     fig = go.Figure()
     i_min, i_max = min([min(vals['index']) for vals in plot_data.values()]), max([max(vals['index']) for vals in plot_data.values()])
      # link model scatter points across multiple environment
@@ -81,7 +83,7 @@ def create_scatter_graph(plot_data, axis_title, dark_mode, ax_border=0.1, marker
     for env_i, (env_name, data) in enumerate(plot_data.items()):
         # scale to vals between 0 and 1?
         index_vals = (np.array(data['index']) - i_min) / (i_max - i_min) if norm_colors else data['index']
-        node_col = sample_colorscale(RATING_COLOR_SCALE, [1-val for val in index_vals])
+        node_col = sample_colorscale(color_scale, [1-val for val in index_vals])
         text = [''] * len(data['x']) if (not display_text) or ('names' not in data) or (len(plot_data) > 1) else data['names']
         fig.add_trace(go.Scatter(
             x=data['x'], y=data['y'], name=env_name, text=text,
