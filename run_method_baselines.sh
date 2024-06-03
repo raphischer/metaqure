@@ -32,4 +32,4 @@ do
     done
 done
 
-python process_logs.py --output-dir $2
+python run_log_processing.py --output-dir $2
