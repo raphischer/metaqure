@@ -33,30 +33,35 @@ def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir):
     if method == 'ASK':
         clf[1].set_params(**{'time_left_for_this_task': max(get_budget(output_dir, ds_name), 30), 'seed': seed})#, 'n_jobs': args.n_jobs})#, 'metric': 'accuracy'})
 
-    fname = hyperparam_fname(ds_name, method)
-    try:
+    # make sure to set parameters to the classifier, in case of pipeline with scaler
+    clf_to_param = clf[1].steps[1][1] if hasattr(clf[1], 'steps') else clf[1]
+    try: # check for hyperparam file
+        fname = hyperparam_fname(ds_name, method)
         with open(fname, 'r') as hyperf:
             hyper_content = json.load(hyperf)
         best_rank_idx = np.argmin(hyper_content['rank_test_score'])
         best_params = hyper_content['params'][best_rank_idx]
-        clf[1].set_params(**best_params)
-        try:
-            clf[1].set_params(**{'n_jobs': n_jobs})
-        except ValueError:
-            print('n_jobs cannot be set for method', method)
-        try:
-            clf[1].set_params(**{'random_state': seed})
-        except ValueError:
-            print('random_state cannot be set for method', method)
+        clf_to_param.set_params(**best_params)
         sensitivity = np.std(hyper_content['mean_test_score'])
     except FileNotFoundError:
         print('  no hyperparameter search information found, using default hyperparameters instead')
         sensitivity = np.nan
+    # if possible, set n jobs and random state
+    try:
+        clf_to_param.set_params(**{'n_jobs': n_jobs})
+    except ValueError:
+        print('n_jobs cannot be set for method', method)
+    try:
+        clf_to_param.set_params(**{'random_state': seed})
+    except ValueError:
+        print('random_state cannot be set for method', method)
+    
     return clf, sensitivity
     
 
 def custom_hyperparam_search(method, X, y, outfile, n_iter, time_budget, seed, multiprocess, cv=5):
     _, clf, cls_params, _ = CLSF[method]
+    clf_to_param = clf.steps[1][1] if hasattr(clf, 'steps') else clf
     n_jobs = cv if multiprocess else None
     # the easy way, without time budget
     if time_budget < 0:
@@ -68,7 +73,7 @@ def custom_hyperparam_search(method, X, y, outfile, n_iter, time_budget, seed, m
         results = {'params': param_list, 'mean_test_score': [], 'std_test_score': []}
         t0 = time.time()
         for params in tqdm(param_list):
-            clf.set_params(**params)
+            clf_to_param.set_params(**params)
             try:
                 scores = cross_val_score(clf, X, y, cv=cv, n_jobs=n_jobs)
                 results['mean_test_score'].append(np.mean(scores))

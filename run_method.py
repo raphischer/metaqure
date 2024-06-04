@@ -119,7 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("--n-jobs", default=-1)
     # output
     parser.add_argument("--output-dir", default='logs/sklearn', type=str, help="path to save outputs")
-    parser.add_argument("--monitor-interval", default=.01, type=float, help="Setting to > 0 activates profiling every X seconds")
+    parser.add_argument("--monitor-interval", default=.1, type=float, help="Setting to > 0 activates profiling every X seconds")
     # randomization and hardware
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
 

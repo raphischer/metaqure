@@ -11,6 +11,8 @@ from sklearn.gaussian_process import GaussianProcessClassifier, kernels
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
 
 from strep.util import read_json, write_json, format_hardware
 
@@ -27,7 +29,7 @@ def get_budget(output_dir, ds, min_time=5):
 CLSF = {
     "kNN": (
         'k-Nearest Neighbors',
-        KNeighborsClassifier(algorithm='auto'),
+        make_pipeline(StandardScaler(), KNeighborsClassifier()),
         {
             'n_neighbors': [1, 3, 5, 10, 15, 20, 30, 50],
             'algorithm': ['auto', 'ball_tree', 'kd_tree'],
@@ -40,7 +42,7 @@ CLSF = {
     
     "SVM": (
         'Support Vector Machine',
-        SVC(), 
+        make_pipeline(StandardScaler(), SVC(cache_size=1000)),
         {
             'kernel': ('linear', 'rbf', 'poly', 'sigmoid'),
             'C': np.exp(np.random.rand((50)) * 6 - 3),
