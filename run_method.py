@@ -60,7 +60,7 @@ def finalize_model(clf, output_dir, param_func, sensitivity):
 
 
 def evaluate_single(ds_loader, args):
-    print(f'Running evaluation on {args.ds} for {args.method} (seed - {args.seed})')
+    print(f'Running evaluation on {args.ds} (subsample {args.subsample}) for {args.method} (seed - {args.seed})')
     t0 = time.time()
     X_train, X_test, y_train, y_test, args.feature_names, args.ds = ds_loader()
     args.subsample, args.ds_orig = ds_name_to_subsample(args.ds)
