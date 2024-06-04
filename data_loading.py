@@ -320,7 +320,7 @@ GENERATED_DATASETS = [
     "make_classification_500_10_8_1_4_2_1-0", "make_classification_1000_20_10_10_5_2_1-0", "make_classification_2000_30_5_5_6_3_1-0",
     "make_classification_500_40_10_5_5_10_1-0", "make_classification_1000_50_10_10_5_2_0-7", "make_classification_2000_60_5_5_6_3_0-7",
     "make_classification_5000_50_40_5_30_1_1-3", "make_classification_10000_70_50_10_50_1_1-3", "make_classification_20000_50_30_5_15_2_1-3",
-    "make_classification_80000_80_10_5_20_3_0-9",
+    "make_classification_60000_30_10_5_20_3_0-9",
     "make_circles_200_0-3_0-7", "make_circles_800_0-2_0-8", "make_moons_500_0-3", "make_moons_900_0-5", "make_hastie_10_2_1000"
 ]
 
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     # for ds in ['make_classification_500_10_8_1_4_2_1-0', 'make_classification_1000_20_10_10_5_2_1-0', 'make_classification_2000_30_5_5_6_3_1-0',
     #            'make_classification_500_40_10_5_5_10_1-0', 'make_classification_1000_50_10_10_5_2_0-7', 'make_classification_2000_60_5_5_6_3_0-7',
     #            'make_classification_5000_50_40_5_30_1_1-3', 'make_classification_10000_70_50_10_50_1_1-3', 'make_classification_20000_30_5_5_60_3_1-3',
-    #            'make_classification_80000_80_10_5_20_3_0-9',
+    #            'make_classification_60000_30_10_5_20_3_0-9',
     #            'make_circles_200_0-3_0-7', 'make_circles_800_0-2_0-8', 'make_moons_500_0-3', 'make_moons_900_0-5', 'make_hastie_10_2_1000']:
     #     X_train, X_test, y_train, y_test, feat, _ = load_data(ds, args.data_home)
     #     data[ds] = X_train, y_train
