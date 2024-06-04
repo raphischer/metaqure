@@ -69,14 +69,18 @@ def custom_hyperparam_search(method, X, y, outfile, n_iter, time_budget, seed, m
         t0 = time.time()
         for params in tqdm(param_list):
             clf.set_params(**params)
-            scores = cross_val_score(clf, X, y, cv=cv, n_jobs=n_jobs)
-            results['mean_test_score'].append(np.mean(scores))
-            results['std_test_score'].append(np.std(scores))
+            try:
+                scores = cross_val_score(clf, X, y, cv=cv, n_jobs=n_jobs)
+                results['mean_test_score'].append(np.mean(scores))
+                results['std_test_score'].append(np.std(scores))
+            except Exception:
+                results['mean_test_score'].append(np.nan)
+                results['std_test_score'].append(np.nan)
             if (time.time() - t0) / 60 > time_budget:
                 print('  - killed due to time limit!')
                 break
         # calculate ranks
-        results['rank_test_score'] = pd.DataFrame(results['mean_test_score']).rank(method='min').astype(int).iloc[:,0].tolist()
+        results['rank_test_score'] = pd.DataFrame(results['mean_test_score']).fillna(0).rank(ascending=False).astype(int).iloc[:,0].tolist()
 
     write_json(outfile, results)
 
@@ -92,14 +96,16 @@ if __name__ == "__main__":
     parser.add_argument("--subsample", type=int, default=None)
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     parser.add_argument("--multiprocess", default=True)
+    parser.add_argument("--override", default=False)
     args = parser.parse_args()
 
     variant_loaders = data_variant_loaders(args.ds, args.data_home, args.seed, args.subsample)
     for ds_variant in variant_loaders:
         X, _, y, _, _, ds_name = ds_variant()
         outfile = hyperparam_fname(ds_name, args.method)
-        print(f'Searching hyperparameters for {outfile}')
-        custom_hyperparam_search(args.method, X, y, outfile, args.n_iter, args.time_budget, args.seed, args.multiprocess)    
+        if args.override or not os.path.isfile(outfile):
+            print(f'Searching {args.method} hyperparameters for {outfile}')
+            custom_hyperparam_search(args.method, X, y, outfile, args.n_iter, args.time_budget, args.seed, args.multiprocess)    
 
         # t0 = time.time()
         # custom_hyperparam_search(args.method, X_train, y_train, outfile)
