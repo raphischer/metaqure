@@ -37,8 +37,8 @@ def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir):
     try:
         with open(fname, 'r') as hyperf:
             hyper_content = json.load(hyperf)
-        best_rank = hyper_content['rank_test_score'].index(1)
-        best_params = hyper_content['params'][best_rank]
+        best_rank_idx = np.argmin(hyper_content['rank_test_score'])
+        best_params = hyper_content['params'][best_rank_idx]
         clf[1].set_params(**best_params)
         try:
             clf[1].set_params(**{'n_jobs': n_jobs})
