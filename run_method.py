@@ -22,37 +22,41 @@ CLSF_METRICS = {
 
 
 def score(y_pred, y_proba, y_test, classes):
-
-    metrics = {}
-    # calculating predictive quality metrics
-    for score, func in CLSF_METRICS.items():
-        try: # some score metrics need information on available classes
-            metrics[score] = func(y_test, y_pred, classes)
-        except TypeError:
-            metrics[score] = func(y_test, y_pred)
-    if y_proba is not None:
-        if classes.size == 2:
-            y_proba = y_proba[:, 1]
-        metrics['top_5_accuracy'] = top_k_accuracy_score(y_test, y_proba, k=5, labels=classes)
-    else:
-        metrics['top_5_accuracy'] = metrics['accuracy'] # top5 is bounded by top1
-    return metrics
+    try:
+        metrics = {}
+        # calculating predictive quality metrics
+        for score, func in CLSF_METRICS.items():
+            try: # some score metrics need information on available classes
+                metrics[score] = func(y_test, y_pred, classes)
+            except TypeError:
+                metrics[score] = func(y_test, y_pred)
+        try:
+            if classes.size == 2:
+                y_proba = y_proba[:, 1]
+            metrics['top_5_accuracy'] = top_k_accuracy_score(y_test, y_proba, k=5, labels=classes)
+        except Exception:
+            metrics['top_5_accuracy'] = metrics['accuracy'] # top5 is bounded by top1    
+        return metrics
+    except Exception:
+        return {}
 
 # additional metrics: generalization? hyperparameter sensitivity? hyperparameter fitting effort? model size?
 
 
 def finalize_model(clf, output_dir, param_func, sensitivity):
-    model_fname = os.path.join(output_dir, 'model.pkl')
-    with open(model_fname, 'wb') as modelfile:
-        pickle.dump(clf, modelfile)
-
-    clf_info = {
-        'hyperparams': 0 if not hasattr(clf, 'get_params') else clf.get_params(),
-        'params': param_func(clf),
-        'fsize': os.path.getsize(model_fname),
-        'hyperparam_sensitivity': sensitivity,
-    }
-    return clf_info
+    try:
+        model_fname = os.path.join(output_dir, 'model.pkl')
+        with open(model_fname, 'wb') as modelfile:
+            pickle.dump(clf, modelfile)
+        return {
+            'hyperparams': 0 if not hasattr(clf, 'get_params') else clf.get_params(),
+            'params': param_func(clf),
+            'fsize': os.path.getsize(model_fname),
+            'hyperparam_sensitivity': sensitivity,
+        }
+    
+    except Exception:
+        return {}
 
 
 def evaluate_single(ds_loader, args):

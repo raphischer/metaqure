@@ -14,7 +14,7 @@ from seedpy import fixedseed
 from sklearn import datasets as sk_datasets
 from sklearn.model_selection import train_test_split, KFold, GroupKFold
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, scale
 
 
 # can be updated by running ucimlrepo.list_available_datasets
@@ -290,6 +290,8 @@ def load_data(ds_name, data_home=None, seed=42, subsample=None):
         X_test = X_test[:,idc]
         feature_names = feature_names[idc]
         ds_name = subsample_to_ds_name(subsample, ds_name)
+
+    # X_train, X_test = scale(X_train), scale(X_test) # maybe add this later?
 
     return X_train, X_test, y_train, y_test, list(feature_names), ds_name
 
