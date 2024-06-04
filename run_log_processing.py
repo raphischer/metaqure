@@ -6,7 +6,8 @@ import numpy as np
 from sklearn.impute import KNNImputer
 
 from strep.load_experiment_logs import assemble_database
-from strep.util import format_software, format_hardware
+from strep.util import format_software, format_hardware, write_json
+from methods import BUDGET_FILE
 
 PROPERTIES = {
     'meta': {
@@ -73,3 +74,13 @@ if __name__ == "__main__":
 
     subset = complete[complete['dataset'].isin(pd.unique(complete['dataset'])[5:15].tolist() + ['credit-g'])]
     subset.reset_index(drop=True).to_pickle(DB_SUB)
+
+    budgets = {}
+    for (env, ds), data in complete.groupby(['environment', 'dataset']):
+        env = env.split(' - ')[0]
+        if env not in budgets:
+            budgets[env] = {}
+        budgets[env][ds] = data['train_running_time'].sum()
+    for env, vals in budgets.items():
+        print(f'{env:<40} time per baseline: {sum(vals.values())}')
+    write_json(BUDGET_FILE, budgets)
