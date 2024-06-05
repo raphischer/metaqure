@@ -29,7 +29,7 @@ def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir):
     if method == 'AGL':
         clf[1].set_params(**{'time_limit': get_budget(output_dir, ds_name)})
     if method == 'NAM':
-        clf[1].timeout = get_budget(output_dir, ds_name)
+        clf[1].timeout_overall = get_budget(output_dir, ds_name)
 
     # make sure to set parameters to the classifier, in case of pipeline with scaler
     clf_to_param = clf[1].steps[1][1] if hasattr(clf[1], 'steps') else clf[1]
