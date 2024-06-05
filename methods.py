@@ -20,10 +20,15 @@ from data_loading import load_data
 
 BUDGET_FILE = 'exp_results/budget.json'
 
-def get_budget(output_dir, ds, min_time=5):
-    architecture = format_hardware(read_json(os.path.join(output_dir, 'execution_platform.json'))['Processor'])
-    budgets = read_json(BUDGET_FILE)
-    return max(int(budgets[architecture][ds]), min_time)
+def get_budget(output_dir, ds, min_time=10):
+    try:
+        architecture = format_hardware(read_json(os.path.join(output_dir, 'execution_platform.json'))['Processor'])
+        budgets = read_json(BUDGET_FILE)
+        return max(int(budgets[architecture][ds]), min_time)
+    except Exception:
+        print(f'  no budget found for {architecture} {ds} - using min time {min_time}')
+        return min_time
+        
 
 
 CLSF = {
