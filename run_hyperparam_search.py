@@ -27,9 +27,9 @@ def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir):
     clf = CLSF[method]
     # fix baseline method parameters that do not have the standard API
     if method == 'AGL':
-        clf[1].set_params(**{'time_limit': get_budget(output_dir, ds_name)})
+        clf[1].set_params(**{'time_limit': max(get_budget(output_dir, ds_name), 10)})
     if method == 'NAM':
-        clf[1].timeout = max(get_budget(output_dir, ds_name), 20)
+        clf[1].timeout = max(get_budget(output_dir, ds_name), 10)
     if method == 'ASK':
         clf[1].set_params(**{'time_left_for_this_task': max(get_budget(output_dir, ds_name), 30), 'seed': seed})#, 'n_jobs': args.n_jobs})#, 'metric': 'accuracy'})
 
@@ -49,12 +49,12 @@ def init_with_best_hyperparams(ds_name, method, seed, n_jobs, output_dir):
     # if possible, set n jobs and random state
     try:
         clf_to_param.set_params(**{'n_jobs': n_jobs})
-    except ValueError:
-        print('n_jobs cannot be set for method', method)
+    except (ValueError, AttributeError):
+        print('  n_jobs cannot be set for method', method)
     try:
         clf_to_param.set_params(**{'random_state': seed})
-    except ValueError:
-        print('random_state cannot be set for method', method)
+    except (ValueError, AttributeError):
+        print('  random_state cannot be set for method', method)
     
     return clf, sensitivity
     
