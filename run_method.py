@@ -81,14 +81,14 @@ def evaluate_single(ds_loader, args):
     ############## PREDICT ##############
     if clf is not None:
         energy_tracker = init_monitoring(args.monitor_interval, output_dir)
-        if hasattr(clf, 'predict_proba'):
+        try:
             y_proba = clf.predict_proba(X_test)
-        else:
+        except Exception:
             y_proba = None
             y_pred = clf.predict(X_test)
         energy_tracker.stop()
 
-        if y_proba is not None:
+        if y_proba is not None: # we also need the non-proba predictions, but unfair to compute them during profiling
             y_pred = clf.predict(X_test)
 
         # write results
