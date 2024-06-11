@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Classification training with Tensorflow, based on PyTorch training")
     # data and model input
-    parser.add_argument("--output-dir", default='/data/d1/sus-meta-results/logs/ws28_240315_bl', type=str, help="path to saved outputs")
+    parser.add_argument("--output-dir", default='/data/d1/sus-meta-results/logs/ws27_240605', type=str, help="path to saved outputs")
     parser.add_argument("--merged-dir", default='exp_results/logs')
 
     args = parser.parse_args()
@@ -53,6 +53,10 @@ if __name__ == "__main__":
     database = assemble_database(args.output_dir, mergedir, None, PROPERTIES)
     if not os.path.isdir(DB_DIR):
         os.makedirs(DB_DIR)
+    fixed = pd.read_pickle('exp_results/databases/svm_knn.pkl')
+    for (model, ds), data in fixed.groupby(['model', 'dataset']):
+        database.loc[(database['model'] == model) & (database['dataset'] == ds),'parameters'] = data['parameters'].values
+        database.loc[(database['model'] == model) & (database['dataset'] == ds),'fsize'] = data['fsize'].values
     database.to_pickle(db_file)
 
     dbs = [pd.read_pickle(os.path.join(DB_DIR, fname)) for fname in os.listdir(DB_DIR) if '.pkl' in fname and fname not in ['complete.pkl', 'baselines.pkl', 'subset.pkl']]
