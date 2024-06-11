@@ -42,7 +42,7 @@ CLSF = {
             'p': [1, 2, 3]
 
         },
-        lambda clf: clf.n_features_in_ * clf.n_samples_fit_ 
+        lambda clf: clf.steps[1][1].n_features_in_ * clf.steps[1][1].n_samples_fit_ 
     ),
     
     "SVM": (
@@ -53,7 +53,7 @@ CLSF = {
             'C': np.exp(np.random.rand((50)) * 6 - 3),
             'gamma': ['scale', 'auto', 0.0001, 0.001, 0.01, 0.1]
         },
-        lambda clf: sum([clf.class_weight_.size, clf.intercept_.size, clf.support_vectors_.size])
+        lambda clf: sum([clf.steps[1][1].class_weight_.size, clf.steps[1][1].intercept_.size, clf.steps[1][1].support_vectors_.size])
     ),
 
     "RF": (

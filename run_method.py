@@ -46,10 +46,14 @@ def score(y_pred, y_proba, y_test, classes):
 def finalize_model(clf, output_dir, param_func, sensitivity):
     try:
         model_fname = os.path.join(output_dir, 'model.pkl')
+        try:
+            hyperparams = clf.steps[1][1].get_params() if hasattr(clf, 'steps') else clf.get_params()
+        except Exception:
+            hyperparams = 0
         with open(model_fname, 'wb') as modelfile:
             pickle.dump(clf, modelfile)
         return {
-            'hyperparams': 0 if not hasattr(clf, 'get_params') else clf.get_params(),
+            'hyperparams': hyperparams,
             'params': param_func(clf),
             'fsize': os.path.getsize(model_fname),
             'hyperparam_sensitivity': sensitivity,
