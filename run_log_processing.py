@@ -59,11 +59,18 @@ if __name__ == "__main__":
         database.loc[(database['model'] == model) & (database['dataset'] == ds),'fsize'] = data['fsize'].values
     database.to_pickle(db_file)
 
-    dbs = [pd.read_pickle(os.path.join(DB_DIR, fname)) for fname in os.listdir(DB_DIR) if '.pkl' in fname and fname not in ['complete.pkl', 'baselines.pkl', 'subset.pkl']]
+    # load all dbs
+    dbs = []
+    for fname in sorted(os.listdir(DB_DIR)):
+        if '.pkl' in fname and fname not in [os.path.basename(fname) for fname in [DB_COMPLETE, DB_BL, DB_SUB]]:
+            dbs.append( pd.read_pickle(os.path.join(DB_DIR, fname)) )
+            # print(f'{fname:<20} no nan {str(dbs[-1].dropna().shape):<12} original {str(dbs[-1].shape):<12}')
+
+    # merge all dbs and do some small fixes
     complete = pd.concat(dbs)
     complete['parameters'] = complete['parameters'].fillna(0) # nan parameters are okay (occurs for PFN)
     complete = complete.dropna().reset_index(drop=True) # get rid of failed PFN evals
-    # for some weird outlier cases (< 4%), codecarbon logged extreeemely high and unreasonable consumed energy (in the thousands and even millions of Watt)
+    # for some weird AGL experiments, codecarbon logged extreeemely high and unreasonable consumed energy (in the thousands and even millions of Watt)
     # we discard these outliers (assuming a max draw of 400 Watt) and do a simple kNN gap filling
     complete.loc[complete['train_power_draw'] / complete['train_running_time'] > 400,'train_power_draw'] = np.nan
     complete.loc[complete['power_draw'] / complete['running_time'] > 400,'power_draw'] = np.nan
@@ -71,20 +78,26 @@ if __name__ == "__main__":
     numeric = complete.select_dtypes('number').columns
     complete.loc[:,numeric] = imputer.fit_transform(complete[numeric])
     
+    # split into metaqure, baselines and subset
     baselines = complete[complete['model'].isin(['PFN', 'AGL', 'NAM', 'PFN4', 'PFN16', 'PFN64', 'PFN32'])]
     complete = complete.drop(baselines.index, axis=0)
     baselines.reset_index(drop=True).to_pickle(DB_BL)
     complete.reset_index(drop=True).to_pickle(DB_COMPLETE)
-
     subset = complete[complete['dataset'].isin(pd.unique(complete['dataset'])[5:15].tolist() + ['credit-g'])]
     subset.reset_index(drop=True).to_pickle(DB_SUB)
 
+    # calculate budgets
     budgets = {}
     for (env, ds), data in complete.groupby(['environment', 'dataset']):
         env = env.split(' - ')[0]
         if env not in budgets:
             budgets[env] = {}
         budgets[env][ds] = data['train_running_time'].sum()
-    for env, vals in budgets.items():
-        print(f'{env:<40} time per baseline: {sum(vals.values())}')
     write_json(BUDGET_FILE, budgets)
+
+    # print some statistics
+    for env, data in complete.groupby('environment'):
+        print(env)
+        print('  complete:', data.dropna().shape)
+        print('  baselines:', baselines[baselines['environment'] == env].dropna().shape)
+        print(f'  time per baseline: {sum(budgets[env.split(" - ")[0]].values())}')
