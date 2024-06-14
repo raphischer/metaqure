@@ -64,17 +64,16 @@ REGRESSORS = {
 }
 
 
-def evaluate_regressor(regr, X, y, cv_splitted, seed):
+def evaluate_regressor(regr, X, y, cv_splitted, seed, scale):
     results = pd.DataFrame(index=X.index, columns=['train_pred', 'test_pred', 'train_err', 'test_err'])
     model_cls, params = REGRESSORS[regr]
     if model_cls not in [DummyRegressor, LinearRegression, SVR]:
         params['random_state'] = seed
     clsf = model_cls(**params)
     drop = 'first' if hasattr(clsf, 'fit_intercept') else None
-    cat_cols = ['model_enc'] if 'environment_enc' not in X.columns else ['model_enc', 'environment_enc']
     preprocessor = ColumnTransformer(transformers=[
-        ('cat', Pipeline(steps=[ ('onehot', OneHotEncoder(drop=drop)) ]), cat_cols),
-        ('num', Pipeline(steps=[ ('scaler', StandardScaler()) ]), X.drop(cat_cols, axis=1).columns.tolist())
+        ('cat', Pipeline(steps=[ ('onehot', OneHotEncoder(drop=drop)) ]), ['environment']),
+        ('num', Pipeline(steps=[ ('scaler', StandardScaler()) ]), X.drop('environment', axis=1).columns.tolist())
     ])
     # fit and predict for each split
     for split_idx, (train_idx, test_idx) in enumerate(cv_splitted):
@@ -85,6 +84,9 @@ def evaluate_regressor(regr, X, y, cv_splitted, seed):
         results.loc[X.iloc[test_idx].index,'test_pred'] = model.predict(X_test)
     results['train_pred'] = results[[c_ for c_ in results.columns if 'train_pred' in c_]].mean(axis=1)
     results = results.drop([f'train_pred{split}' for split in range(len(cv_splitted))], axis=1)
+    if scale == 'index': 
+        results['train_pred'] = results['train_pred'].clip(lower=0, upper=1)
+        results['test_pred'] = results['test_pred'].clip(lower=0, upper=1)
     results['train_err'], results['test_err'] = results['train_pred'] - y, results['test_pred'] - y
     return results
 
@@ -114,39 +116,39 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42, help="Seed to use")
     args = parser.parse_args()
+
     all_meta_features = load_meta_features()
     meta = load_meta()
     weights = {col: val['weight'] for col, val in meta['properties'].items()}
-
+    database = load_database(DB_COMPLETE)
+    rated_db = rate_database(database, meta, indexmode='best')[0]
+    
     with fixedseed(np, seed=args.seed):
         for ft_name, meta_features in all_meta_features.items():
-            # load meta features and database        
-            meta_ft_cols = list(meta_features.columns) + ['model_enc']
-            database = load_database(DB_COMPLETE)
-            rated_db = rate_database(database, meta, indexmode='best')[0]
-            index_db, value_db = prop_dict_to_val(rated_db, 'index'), prop_dict_to_val(rated_db, 'value')
-            all_results, result_cols = [], []
+            # load meta features and database
+            meta_ft_cols = list(meta_features.columns) + ['environment']
+            all_results = {'index': pd.DataFrame(index=database.index), 'value': pd.DataFrame(index=database.index), 'recalc_value': pd.DataFrame(index=database.index)}
+            index_db, value_db = prop_dict_to_val(rated_db, 'index'), prop_dict_to_val(rated_db, 'value')    
             for db, scale in zip([index_db, value_db], ['index', 'value']):
-                # store meta feature in database
+                # store meta feature in respective dataframe
                 for ds, sub_db in db.groupby('dataset'):
                     if ds in meta_features.index:
                         db.loc[sub_db.index,meta_features.columns] = meta_features[meta_features.index == ds].values
-                db['model_enc'] = LabelEncoder().fit_transform(db['model'].values)
-                db['environment_enc'] = LabelEncoder().fit_transform(db['environment'].values)
-                # prepare grouped cross-validation
-                cv_splits = ds_cv_split(db['dataset'], n_splits=5)
-                opt_find_db = db.iloc[cv_splits[0][0]] # first cv train split used for finding optimal model choice
-                opt_find_cv_splits = ds_cv_split(opt_find_db['dataset'], n_splits=5)
-                for use_env, cols in zip(['not_use_env', 'use_env'], [meta_ft_cols, meta_ft_cols + ['environment_enc']]):
-                    print(f'\n\n\n\n:::::::::::::::: META LEARN USING {ft_name} with {scale}, {use_env} \n')
+                # train meta-learners for each individual algorithm
+                for algo, algo_db in db.groupby('model'):
+                    # prepare grouped cross-validation
+                    cv_splits = ds_cv_split(algo_db['dataset'], n_splits=5)
+                    opt_find_db = algo_db.iloc[cv_splits[0][0]] # first cv train split used for finding optimal model choice
+                    opt_find_cv_splits = ds_cv_split(opt_find_db['dataset'], n_splits=5)
+                    print(f'\n\n\n\n:::::::::::::::: META LEARN FOR {algo} USING {ft_name} with {scale}\n')
                     compound_col_res_idc = {}
                     for col, col_meta in meta['properties'].items():
-                        # first, find optimal model choice on subset of the data (first cv train split)
+                        # 1. find optimal model choice on subset of the data (first cv train split)
                         regr_results = {}
                         for regr in REGRESSORS.keys():
-                            res = evaluate_regressor(regr, opt_find_db[cols], opt_find_db[col], opt_find_cv_splits, args.seed)
+                            res = evaluate_regressor(regr, opt_find_db[meta_ft_cols], opt_find_db[col], opt_find_cv_splits, args.seed, scale)
                             if scale == 'index': # make the selection based on MAE of REAL measurements
-                                res = recalculate_original_values(res, col, db, value_db, col_meta)
+                                res = recalculate_original_values(res, col, algo_db, value_db.loc[algo_db.index], col_meta)
                             regr_results[regr] = res
                         sorted_results = list(sorted([(res['test_err'].abs().mean(), regr) for regr, res in regr_results.items()]))
                         best_model = sorted_results[0][1]
@@ -154,27 +156,25 @@ if __name__ == '__main__':
                         #     print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1), col)})')
                         # TODO also store sorted_models.index[0] (best model name?)
 
-                        # train and evaluate best model on full data!
-                        best_model_results = evaluate_regressor(best_model, db[cols], db[col], cv_splits, args.seed)
-                        all_results.append( best_model_results.rename(lambda c_ : f'{col}_{c_}', axis=1) )
-                        result_cols.append(f'{use_env}__{scale}')
+                        # 2. train and evaluate best model on full data!
+                        best_model_results = evaluate_regressor(best_model, algo_db[meta_ft_cols], algo_db[col], cv_splits, args.seed, scale)
+                        best_results_renamed = best_model_results.rename(lambda c_ : f'{col}_{c_}', axis=1)
+                        all_results[scale].loc[algo_db.index,best_results_renamed.columns] = best_results_renamed
                         compound_col_res_idc[col] = len(all_results) - 1 # remember the columns that will be important for the compound index
                         if scale == 'index': # recalculate index predictions to real value predictions
-                            recalc_results = recalculate_original_values(best_model_results, col, db, value_db, col_meta)
-                            all_results.append( recalc_results.rename(lambda c_ : f'{col}_{c_}', axis=1) )
-                            result_cols.append(f'{use_env}__rec_index')
-                        print(f'{ft_name:<8} - {col:<18} - {str(db[cols].shape):<10} - Best Model: {best_model:<17} - {error_info_as_string(all_results[-1], col)}')
-                    if scale == 'index':
-                        # recalculate the compound index score
-                        index_pred = pd.DataFrame(index=db.index)
-                        for split in ['_train_pred', '_test_pred']:
-                            results = pd.concat([all_results[res_idx][f'{col}{split}'] for col, res_idx in compound_col_res_idc.items()], axis=1)
-                            results = results.rename(lambda c: c.replace(split, ''), axis=1)
-                            index_pred[f'compound_index{split}'] = [calculate_single_compound_rating(vals, custom_weights=weights) for _, vals in results.iterrows()]
-                            index_pred[f'compound_index{split.replace("_pred", "_err")}'] = db['compound_index'] - index_pred[f'compound_index{split}']
-                        print(f'{"ft_name":<8} - {"compound":<18} - {str(db[cols].shape):<10} -                               - {error_info_as_string(index_pred, "compound_index")}')
-                        all_results.append(index_pred)
-                        result_cols.append(f'{use_env}__index')
+                            recalc = recalculate_original_values(best_model_results, col, algo_db, value_db.loc[algo_db.index], col_meta).rename(lambda c_ : f'{col}_{c_}', axis=1)
+                            all_results['recalc_value'].loc[algo_db.index,recalc.columns] = recalc
+                        err_data = recalc if scale == 'index' else best_results_renamed
+                        print(f'{ft_name:<8} - {col:<18} - {str(algo_db[meta_ft_cols].shape):<10} - Best Model: {best_model:<17} - {error_info_as_string(err_data, col)}')
+                # recalculate the compound index score
+                index_pred = pd.DataFrame(index=db.index)
+                for split in ['_train_pred', '_test_pred']:
+                    # retrieve the index predictions for all property columns
+                    results = all_results['index'][[col for col in all_results['index'].columns if split in col]].rename(lambda c: c.replace(split, ''), axis=1)
+                    index_pred[f'compound_index{split}'] = [calculate_single_compound_rating(vals, custom_weights=weights) for _, vals in results.iterrows()]
+                    index_pred[f'compound_index{split.replace("_pred", "_err")}'] = db['compound_index'] - index_pred[f'compound_index{split}']
+                print(f'{"ft_name":<8} - {"compound":<18} - {str(db[meta_ft_cols].shape):<10} -                               - {error_info_as_string(index_pred, "compound_index")}')
+                all_results['index'].loc[:,index_pred.columns] = index_pred
 
-            final_results = pd.concat(all_results, keys=result_cols, axis=1)
+            final_results = pd.concat(all_results.values(), keys=all_results.keys(), axis=1)
             final_results.to_pickle(os.path.join(ML_RES_DIR, f'{ft_name}.pkl'))
