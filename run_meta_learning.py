@@ -14,7 +14,7 @@ from seedpy import fixedseed
 from sklearn.dummy import DummyRegressor
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, max_error
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet

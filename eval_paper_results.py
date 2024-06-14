@@ -152,14 +152,14 @@ if __name__ == '__main__':
             baseline_results[mod]['acc'] = baseline_results[mod]['acc'] + data['accuracy'].values.tolist()
             baseline_results[mod]['env'] = baseline_results[mod]['env'] + [env] * data.shape[0]
         for idx, (mod, results) in enumerate( baseline_results.items() ):
-            fig.add_trace(go.Box(x=results['ene'], y=results['env'], offsetgroup=f'{mod}{mod}', name=mod, legendgroup=mod, marker_color=COL_FIVE[idx], showlegend=row_idx==0), row=1+row_idx, col=1)
-            fig.add_trace(go.Box(x=results['acc'], y=results['env'], offsetgroup=f'{mod}{mod}', name=mod, legendgroup=mod, marker_color=COL_FIVE[idx], showlegend=False), row=1+row_idx, col=2)
+            fig.add_trace(go.Box(x=results['acc'], y=results['env'], offsetgroup=f'{mod}{mod}', name=mod, legendgroup=mod, marker_color=COL_FIVE[idx], showlegend=False), row=1+row_idx, col=1)
+            fig.add_trace(go.Box(x=results['ene'], y=results['env'], offsetgroup=f'{mod}{mod}', name=mod, legendgroup=mod, marker_color=COL_FIVE[idx], showlegend=row_idx==0), row=1+row_idx, col=2)
     fig.update_layout(boxmode='group', width=PLOT_WIDTH, height=PLOT_HEIGHT*2.5, margin={'l': 0, 'r': 15, 'b': 46, 't': 0},
                       legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="center", x=0.5))
     fig.update_traces(orientation='h')
-    fig.update_xaxes(type="log", title='', row=1, col=1)
-    fig.update_xaxes(type="log", title='Energy Draw [Ws]', row=2, col=1)
-    fig.update_xaxes(title='Accuracy [%]', row=2, col=2)
+    fig.update_xaxes(type="log", title='', row=1, col=2)
+    fig.update_xaxes(title='Accuracy [%]', row=2, col=1)
+    fig.update_xaxes(type="log", title='Energy Draw [Ws]', row=2, col=2)
     fig.show()
     fig.write_image(f'baseline_comparisons.pdf')
 

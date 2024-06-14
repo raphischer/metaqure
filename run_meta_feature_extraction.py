@@ -28,7 +28,7 @@ def load_meta_features():
         if not '.csv' in meta_ft_file:
             continue
         meta_features[meta_ft_file.replace('.csv', '')] = pd.read_csv(os.path.join(META_FT_DIR, meta_ft_file)).set_index('Unnamed: 0').fillna(0)
-    meta_features['combined'] = pd.concat(meta_features.values(), axis=1)
+    meta_features['combined'] = pd.concat([meta_features[key] for key in ['statistical', 'ds2vec']], axis=1)
     return meta_features
 
 
