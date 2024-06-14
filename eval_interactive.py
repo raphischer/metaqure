@@ -9,9 +9,6 @@ from run_log_processing import DB_COMPLETE
 def preprocess_database(fname):
     # load database
     database = load_database(fname)
-    for ds, data in database.groupby('dataset'):
-        if data.dropna().shape != (20, 20):
-            print(f'{ds:<60} {str(data.dropna().shape)}')
     # load meta infotmation
     meta = load_meta()
     # rate database

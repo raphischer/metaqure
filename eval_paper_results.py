@@ -113,8 +113,8 @@ if __name__ == '__main__':
             if mod == 'OURS':
                 # access results of our method
                 sub_pred = meta_res[meta_res['environment'] == env]
-                rec_models = sub_pred.sort_values(['dataset', ('use_env__index', 'accuracy_test_pred')], ascending=False).groupby('dataset').first()['model']
-                data = pd.concat([db[(db['environment'] == env) & (db['dataset'] == ds) & (db['model'] == mod)] for ds, mod in rec_models.iteritems()])
+                rec_models = sub_pred.sort_values(['dataset', ('index', 'accuracy_test_pred')], ascending=False).groupby('dataset').first()['model']
+                data = pd.concat([db[(db['environment'] == env) & (db['dataset'] == ds) & (db['model'] == mod)] for ds, mod in rec_models.items()])
             elif mod == 'EXH':
                 # access results of our method
                 sub_db = exhau_res[(exhau_res['environment'] == env)]
@@ -153,10 +153,10 @@ if __name__ == '__main__':
         colors, sizes = zip(*[(all_meta_features['statistical'].loc[ds,'n_predictors'], all_meta_features['statistical'].loc[ds,'n_instances']) for ds in all_meta_features[key].index])
         fig.add_trace( go.Scatter(x=embedding[:,0], y=embedding[:,1], mode='markers', showlegend=False, marker={'color': np.log(colors), 'size': np.log(sizes), 'coloraxis': 'coloraxis', 'sizemin': 1}), row=1, col=idx+1)
         # add bars for objective errors
-        pred_error_mean = [meta_results[key][('use_env__index', f'{col}_test_err')].abs().mean() for col, _, _ in objectives]
-        pred_error_stds = [meta_results[key][('use_env__index', f'{col}_test_err')].abs().std() for col, _, _ in objectives]
-        fig.add_trace(go.Bar(x=list(zip(*objectives))[2], y=pred_error_mean, marker_color=COL_FIVE[0], showlegend=False), row=2, col=idx+1)
-        fig.update_yaxes(range=[0, 0.25], showticklabels=idx==0, row=2, col=idx+1)
+        pred_error_mean = [meta_results[key][('index', f'{col}_test_err')].abs().mean() for col, _, _ in objectives]
+        pred_error_stds = [meta_results[key][('index', f'{col}_test_err')].abs().std() for col, _, _ in objectives]
+        fig.add_trace(go.Bar(x=list(zip(*objectives))[2], y=pred_error_mean, text=[f'{v:4.3f}' for v in pred_error_mean], textposition='auto', marker_color=COL_FIVE[0], showlegend=False), row=2, col=idx+1)
+        fig.update_yaxes(range=[0, 0.18], showticklabels=idx==0, row=2, col=idx+1)
     fig.update_yaxes(title='S(a, c) MAE', row=2, col=1)
     # add traces for the scatter size legend
     for idx, n in enumerate([int(min(list(sizes))), 500, 5000, int(max(list(sizes)))]):
@@ -178,11 +178,11 @@ if __name__ == '__main__':
     traces, titles = [], []
     for idx, (prop, prop_meta) in enumerate(meta_info['properties'].items()):
         row, col = 2 if idx >= len(meta_info['properties']) / 2 else 1, int(idx % (len(meta_info['properties']) / 2)) + 1
-        for e_idx, (env_info, scale) in enumerate( [('use_env', 'rec_index'), ('use_env', 'value')] ):
-            res = meta_results['combined'].xs(f'{env_info}__{scale}', level=0, axis=1)[f'{prop}_test_err']
+        for e_idx, scale in enumerate(['recalc_value', 'value']):
+            res = meta_results['combined'][(scale, 'fsize_test_err')]
             if e_idx == 0: # use same target unit for both scales!
                 _, to_unit = formatter.reformat_value(res.iloc[0], prop_meta['unit'])
-            trace, color = ('Index', COL_FIVE[0]) if scale == 'rec_index' else ('Value', COL_FIVE[4])
+            trace, color = ('Index', COL_FIVE[0]) if scale == 'recalc_value' else ('Value', COL_FIVE[4])
             reformatted = res.abs().map(lambda val: formatter.reformat_value(val, prop_meta['unit'], unit_to=to_unit, as_str=False))
             traces.append( (row, col, go.Box(name=trace, y=reformatted, legendgroup=trace, showlegend=idx==0, marker_color=color)) )
             if e_idx == 0:
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     for row_idx, (sort_col, text, _) in enumerate(objectives):
         for col_idx, env in enumerate( env_cols.keys() ):
             groundtruth = index_db[index_db['environment'] == env][['dataset','model',sort_col]]
-            pred_col = ('use_env__index', f'{sort_col}_test_pred')
+            pred_col = ('index', f'{sort_col}_test_pred')
             predicted = meta_results['combined'].loc[groundtruth.index,pred_col]
             gt_and_pred = pd.concat([groundtruth, predicted], axis=1)
             true_best = gt_and_pred.sort_values(['dataset', sort_col], ascending=False).groupby('dataset').first()['model'].values
@@ -233,8 +233,10 @@ if __name__ == '__main__':
     for val, (ds, model) in sorted(mod_ds_acc_std)[-10:]:
         print(f'{ds:<80} {model:<10} {val:5.3f}')
     MOD_DISP_IMPORT = sorted(mod_ds_mean_std)
-    DS_SEL = 'credit-g'
-    MOD_SEL = [('credit-g', 'SGD'), ('lung_cancer', 'XRF'), ('SpeedDating', 'AB')]
+    print(MOD_DISP_IMPORT[:10])
+    print(MOD_DISP_IMPORT[-10:])
+    DS_SEL = 'parkinsons'
+    MOD_SEL = [('parkinsons', 'SGD'), ('dry_bean_dataset', 'MLP'), ('lung_cancer', 'XRF')]
 
 
     # ##### VIOLIN of standard devs across environments
@@ -293,8 +295,8 @@ if __name__ == '__main__':
     scatter.show()
     scatter.write_image(f"scatter.pdf")
 
-    # ####### STAR PLOTS for the biggest performance differences
-    fig = make_subplots(rows=1, cols=len(MOD_SEL), specs=[[{'type': 'polar'}, {'type': 'polar'}, {'type': 'polar'}]], subplot_titles=[f'{mod} on {ds if len(ds) < 15 else ds[:15] + ".."}' for ds, mod in MOD_SEL])
+    ####### STAR PLOTS for the biggest performance differences
+    fig = make_subplots(rows=1, cols=len(MOD_SEL), specs=[[{'type': 'polar'}, {'type': 'polar'}, {'type': 'polar'}]], subplot_titles=[f'{mod} on {ds if len(ds) < 17 else ds[:15] + ".."}' for ds, mod in MOD_SEL])
     for idx, (ds, mod) in enumerate(MOD_SEL):
         for e_idx, env in enumerate(env_cols.keys()):
             subdb = index_db[(index_db['dataset'] == ds) & (index_db['model'] == mod) & (index_db['environment'] == env)].iloc[0]
@@ -309,74 +311,4 @@ if __name__ == '__main__':
     )
     fig.show()
     fig.write_image(f'star_differences.pdf')
-        
-
-
-
-
-
-
-    # TABLE COMPARISON WITH BASELINE
-    # env_results = {env: [] for env in pd.unique(rated_db['environment'])}
-    # for (ds, task, env), subdata in rated_db.groupby(['dataset', 'task', 'environment']):
-    #     bl = baselines[(baselines['dataset'] == ds) & (baselines['environment'] == env) & (baselines['model'] == 'PFN16')]
-    #     if bl.shape[0] > 0:
-    #         pred = meta_results['combined'].loc[subdata.index]
-    #         pred_best = pred.loc[:,(f'use_env__index')].sort_values('compound_index_test_pred', ascending=False).index[0]
-    #         actual_best = subdata.sort_values('compound_index', ascending=False).index[0]
-    #         env_results[env].append([
-    #             db.loc[pred_best]['accuracy'], # ours acc
-    #             db.loc[pred_best][['power_draw', 'train_power_draw']].sum(), # ours power
-    #             bl.iloc[0]['accuracy'].sum(), # baseline acc
-    #             bl.iloc[0][['power_draw', 'train_power_draw']].sum() # baseline power
-    #         ])
-    # tex_rows = [
-    #     r'Environment & \multicolumn{2}{c}{Our method} & \multicolumn{2}{c}{TabPFN} \\',
-    #     r'& Accuracy [%] & Power Draw [Ws] & Accuracy [%] & Power Draw [Ws] \\',
-    #     r'\midrule'
-    # ]
-    # for env, results in env_results.items():
-    #     env_mean, env_std = np.array(results).mean(axis=0), np.array(results).std(axis=0)
-    #     tex_rows.append( ' & '.join([env] + [f'{mean:5.2f} ($\pm${std:5.2f})' for mean, std in zip(env_mean, env_std)]) + r' \\')
-    # final_text = TEX_TABLE_GENERAL.replace('$DATA', '\n        '.join(tex_rows)).replace('$ALIGN', r'{c|cc|cc}')
-    # final_text = final_text.replace('%', r'\%').replace('#', r'\#').replace("µ", r"$\mu$")
-    # with open('baseline_comparison.tex', 'w') as outf:
-    #     outf.write(final_text)
     
-
-    # BEST METHOD PERFORMANCE ON EACH DATA SET
-    # tex_rows = [
-    #     # r'& \multicolumn{2}{c}{Default} & \multicolumn{2}{c}{Training on real measurements} \\',
-    #     r'& Default & Without Env Info & Without Index Scaling \\',
-    #     r'\midrule'
-    # ]
-    # fig = make_subplots(rows=1, cols=len(meta['properties']))
-    # for idx, (col, col_meta) in enumerate(meta['properties'].items()):
-    #     # lowest, lowest_idx = np.inf, -1
-    #     for env_info, scale in [('use_env', 'rec_index'), ('use_env', 'value')]:
-    #         res = meta_results['combined'].xs(f'{env_info}__{scale}', level=0, axis=1)[f'{col}_test_err']
-    #         trace = 'Index' if scale == 'rec_index' else 'Value'
-    #         fig.add_trace(go.Violin(x=[trace]*len(res), y=res, name=trace, legendgroup=trace, showlegend=idx==0), row=1, col=idx+1)
-    # fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT, margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
-    # fig.show()
-        #     error_res = meta_results['combined'].xs(f'{env_info}__{scale}', level=0, axis=1)[f'{col}_test_err']
-        #     results.append( (error_res.abs().mean(), error_res.abs().std()) )
-    #     to_unit = formatter.reformat_value(results[0][0], col_meta['unit'])[1]
-    #     format_res = [f'{formatter.reformat_value(mae, col_meta["unit"], to_unit)[0]} ($\pm${formatter.reformat_value(std, col_meta["unit"], to_unit)[0]})' for mae, std in results]
-    #     lowest_idx = np.argmin([val[0] for val in results]) # check for lowest MAE
-    #     format_res[lowest_idx] = r'\textbf{' + format_res[lowest_idx] + r'}'
-    #     tex_rows.append(' & '.join([f'{col_meta["shortname"]} {to_unit}'] + format_res) + r' \\')
-    # final_text = TEX_TABLE_GENERAL.replace('$DATA', '\n        '.join(tex_rows)).replace('$ALIGN', r'{c|ccc}')
-    # final_text = final_text.replace('%', r'\%').replace('#', r'\#').replace("µ", r"$\mu$")
-    # with open('meta_learn_errors.tex', 'w') as outf:
-    #     outf.write(final_text)
-
-###### TODO
-
-    # CRIT DIFF DIAGRAM for compound, power, acc, maybe getrennt für training / inferenz?
-
-    # IMPACT OF ENVIRONMENT FEATURES
-    # IMPACT OF INDEX SCALING
-    # => on PREDICTION QUALITY
-
-    # check how recommendations change when using different weights
