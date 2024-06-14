@@ -91,6 +91,29 @@ if __name__ == '__main__':
     time.sleep(0.5)
     os.remove("dummy.pdf")
 
+    # ERRORS ACROSS PROPERTIES
+    traces, titles = [], []
+    for idx, (prop, prop_meta) in enumerate(meta_info['properties'].items()):
+        row, col = 2 if idx >= len(meta_info['properties']) / 2 else 1, int(idx % (len(meta_info['properties']) / 2)) + 1
+        for e_idx, (scale, trace, color) in enumerate(zip(['recalc_value', 'value'], ['Index', 'Value'], [COL_FIVE[0], COL_FIVE[4]])):
+            res = meta_results['combined'][(scale, f'{prop}_test_err')]
+            if e_idx == 0: # use same target unit for both scales!
+                _, to_unit = formatter.reformat_value(res.iloc[0], prop_meta['unit'])
+            reformatted = res.abs().map(lambda val: formatter.reformat_value(val, prop_meta['unit'], unit_to=to_unit, as_str=False))
+            traces.append( (row, col, go.Box(name=trace, y=reformatted, legendgroup=trace, showlegend=idx==0, marker_color=color)) )
+            if e_idx == 0:
+                titles.append(f"{prop_meta['shortname']} {to_unit}")
+    fig = make_subplots(rows=2, cols=int(len(meta_info['properties']) / 2), y_title='Real-valued abs. est. error', subplot_titles=titles, vertical_spacing=0.12, horizontal_spacing=0.05)
+    for row, col, trace in traces:
+        fig.add_trace(trace, row=row, col=col)
+        fig.update_xaxes(visible=False, showticklabels=False, row=row, col=col)
+        if row==2:
+            fig.update_yaxes(type="log", row=row, col=col) 
+    fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT*1.3, margin={'l': 57, 'r': 0, 'b': 0, 't': 18},
+                      legend=dict(title='Meta-learning from values on scale:', orientation="h", yanchor="top", y=-0.02, xanchor="center", x=0.5))
+    fig.show()
+    fig.write_image('errors_across_properties.pdf')
+
     ####### BASELINE COMPARISONS
     pfn_ds = pd.unique(baselines[baselines['model'] == 'PFN']['dataset'])
     meta_results['combined'][['dataset', 'environment', 'model']] = db[['dataset', 'environment', 'model']]
@@ -174,30 +197,6 @@ if __name__ == '__main__':
     rated_db, bounds, _, _ = rate_database(db, meta_info)
     index_db = prop_dict_to_val(rated_db, 'index')
     
-    # ERRORS ACROSS PROPERTIES
-    traces, titles = [], []
-    for idx, (prop, prop_meta) in enumerate(meta_info['properties'].items()):
-        row, col = 2 if idx >= len(meta_info['properties']) / 2 else 1, int(idx % (len(meta_info['properties']) / 2)) + 1
-        for e_idx, scale in enumerate(['recalc_value', 'value']):
-            res = meta_results['combined'][(scale, 'fsize_test_err')]
-            if e_idx == 0: # use same target unit for both scales!
-                _, to_unit = formatter.reformat_value(res.iloc[0], prop_meta['unit'])
-            trace, color = ('Index', COL_FIVE[0]) if scale == 'recalc_value' else ('Value', COL_FIVE[4])
-            reformatted = res.abs().map(lambda val: formatter.reformat_value(val, prop_meta['unit'], unit_to=to_unit, as_str=False))
-            traces.append( (row, col, go.Box(name=trace, y=reformatted, legendgroup=trace, showlegend=idx==0, marker_color=color)) )
-            if e_idx == 0:
-                titles.append(f"{prop_meta['shortname']} {to_unit}")
-    fig = make_subplots(rows=2, cols=int(len(meta_info['properties']) / 2), y_title='Real-valued abs. est. error', subplot_titles=titles, vertical_spacing=0.12, horizontal_spacing=0.05)
-    for row, col, trace in traces:
-        fig.add_trace(trace, row=row, col=col)
-        fig.update_xaxes(visible=False, showticklabels=False, row=row, col=col)
-        if row==2:
-            fig.update_yaxes(type="log", row=row, col=col) 
-    fig.update_layout(width=PLOT_WIDTH, height=PLOT_HEIGHT*1.3, margin={'l': 57, 'r': 0, 'b': 0, 't': 18},
-                      legend=dict(title='Meta-learning from values on scale:', orientation="h", yanchor="top", y=-0.02, xanchor="center", x=0.5))
-    fig.show()
-    fig.write_image('errors_across_properties.pdf')
-    
     ########### OTPIMAL MODEL CHOICE
     fig = make_subplots(rows=len(objectives), cols=len(env_cols), shared_yaxes=True, shared_xaxes=True, horizontal_spacing=0.01, vertical_spacing=0.01, subplot_titles=list(env_cols.keys()))
     for row_idx, (sort_col, text, _) in enumerate(objectives):
@@ -236,7 +235,7 @@ if __name__ == '__main__':
     print(MOD_DISP_IMPORT[:10])
     print(MOD_DISP_IMPORT[-10:])
     DS_SEL = 'parkinsons'
-    MOD_SEL = [('parkinsons', 'SGD'), ('dry_bean_dataset', 'MLP'), ('lung_cancer', 'XRF')]
+    MOD_SEL = [('parkinsons', 'GNB'), ('parkinsons', 'SGD'), ('dry_bean_dataset', 'MLP')]
 
 
     # ##### VIOLIN of standard devs across environments
