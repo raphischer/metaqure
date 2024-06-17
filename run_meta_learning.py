@@ -5,6 +5,7 @@ warnings.warn = warn
 
 import argparse
 import os
+import time
 
 import pandas as pd
 import numpy as np
@@ -13,7 +14,7 @@ from seedpy import fixedseed
 from sklearn.dummy import DummyRegressor
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, max_error
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
@@ -41,7 +42,7 @@ ENCODERS = {
 ML_RES_DIR = os.path.join('exp_results', 'meta_learning')
 
 REGRESSORS = {
-    'Global Mean':              (DummyRegressor, {}),
+    # 'Global Mean':              (DummyRegressor, {}),
     'Linear Regression':        (LinearRegression, {}),
     'Ridge A1':                 (Ridge, {'alpha': 1.0}),
     'Ridge A0.1':               (Ridge, {'alpha': 0.1}),
@@ -91,20 +92,13 @@ def evaluate_regressor(regr, X, y, cv_splitted, seed, scale):
     return results
 
 
-def recalculate_original_values(results, col, index_db, value_db, col_meta):
+def recalculate_original_values(results, ref_vals, value_db, col, col_meta):
     higher_better = 'maximize' in col_meta and col_meta['maximize']
     recalc_results = pd.DataFrame(index=results.index)
-    # needs to be split into calculations for each DS TASK ENV COMBO (due to different reference values)
-    for _, sub_db in index_db.groupby(['dataset', 'task', 'environment']):
-        ref_idx = sub_db[col].idxmax() # reference value always has highest index (== 1)
-        ref_val = value_db.loc[ref_idx,col]
-        try:
-            recalc_results.loc[sub_db.index,'train_pred'] = results.loc[sub_db.index,'train_pred'].map(lambda v: index_to_value(v, ref_val, higher_better))
-            recalc_results.loc[sub_db.index,'test_pred'] = results.loc[sub_db.index,'test_pred'].map(lambda v: index_to_value(v, ref_val, higher_better))
-            recalc_results.loc[sub_db.index,'train_err'] = value_db.loc[sub_db.index,col] - recalc_results.loc[sub_db.index,'train_pred']
-            recalc_results.loc[sub_db.index,'test_err'] = value_db.loc[sub_db.index,col] - recalc_results.loc[sub_db.index,'test_pred']
-        except KeyError:
-            assert results.shape != index_db.shape
+    recalc_results['train_pred'] = index_to_value(results['train_pred'], ref_vals, higher_better)
+    recalc_results['test_pred'] = index_to_value(results['test_pred'], ref_vals, higher_better)
+    recalc_results['train_err'] = value_db.loc[results.index,col] - recalc_results['train_pred']
+    recalc_results['test_err'] = value_db.loc[results.index,col] - recalc_results['test_pred']
     return recalc_results
 
 
@@ -122,13 +116,19 @@ if __name__ == '__main__':
     weights = {col: val['weight'] for col, val in meta['properties'].items()}
     database = load_database(DB_COMPLETE)
     rated_db = rate_database(database, meta, indexmode='best')[0]
+    best_regr = {}
     
     with fixedseed(np, seed=args.seed):
         for ft_name, meta_features in all_meta_features.items():
             # load meta features and database
             meta_ft_cols = list(meta_features.columns) + ['environment']
             all_results = {'index': pd.DataFrame(index=database.index), 'value': pd.DataFrame(index=database.index), 'recalc_value': pd.DataFrame(index=database.index)}
-            index_db, value_db = prop_dict_to_val(rated_db, 'index'), prop_dict_to_val(rated_db, 'value')    
+            index_db, value_db = prop_dict_to_val(rated_db, 'index'), prop_dict_to_val(rated_db, 'value')
+            # already collect reference values (only done once, for faster recalculation)
+            for (d, t, e), sub_db in index_db.groupby(['dataset', 'task', 'environment']):
+                for col in meta['properties'].keys():
+                    ref_idx = sub_db[col].idxmax() # reference value always has highest index (== 1)
+                    index_db.loc[(index_db['dataset'] == d) & (index_db['task'] == t) & (index_db['environment'] == e),f'{col}_ref_val'] = value_db.loc[ref_idx,col]
             for db, scale in zip([index_db, value_db], ['index', 'value']):
                 # store meta feature in respective dataframe
                 for ds, sub_db in db.groupby('dataset'):
@@ -145,14 +145,20 @@ if __name__ == '__main__':
                         # 1. find optimal model choice on subset of the data (first cv train split)
                         regr_results = {}
                         for regr in REGRESSORS.keys():
+                            t0 = time.time()
                             res = evaluate_regressor(regr, opt_find_db[meta_ft_cols], opt_find_db[col], opt_find_cv_splits, args.seed, scale)
+                            t1 = time.time()
                             if scale == 'index': # make the selection based on MAE of REAL measurements
-                                res = recalculate_original_values(res, col, algo_db, value_db.loc[algo_db.index], col_meta)
+                                res = recalculate_original_values(res, opt_find_db[f'{col}_ref_val'], value_db, col, col_meta)
+                                # print(f'  evaluated    {regr:<20} {t1-t0:5.3f}  recalculated {regr:<20} {time.time()-t1:5.3f}')
+                            # else:
+                            #     print(f'  evaluated    {regr:<20} {t1-t0:5.3f}')
                             regr_results[regr] = res
                         sorted_results = list(sorted([(res['test_err'].abs().mean(), regr) for regr, res in regr_results.items()]))
                         best_model = sorted_results[0][1]
-                        # for regr in sorted_models.index:
-                        #     print(f'    {regr:<17} - {error_info_as_string(results.xs(regr, level=1, axis=1), col)})')
+                        if best_model not in best_regr:
+                            best_regr[best_model] = 0
+                        best_regr[best_model] += 1
                         # TODO also store sorted_models.index[0] (best model name?)
 
                         # 2. train and evaluate best model on full data!
@@ -160,7 +166,7 @@ if __name__ == '__main__':
                         best_results_renamed = best_model_results.rename(lambda c_ : f'{col}_{c_}', axis=1)
                         all_results[scale].loc[algo_db.index,best_results_renamed.columns] = best_results_renamed
                         if scale == 'index': # recalculate index predictions to real value predictions
-                            recalc = recalculate_original_values(best_model_results, col, algo_db, value_db.loc[algo_db.index], col_meta).rename(lambda c_ : f'{col}_{c_}', axis=1)
+                            recalc = recalculate_original_values(best_model_results, algo_db[f'{col}_ref_val'], value_db, col, col_meta).rename(lambda c_ : f'{col}_{c_}', axis=1)
                             all_results['recalc_value'].loc[algo_db.index,recalc.columns] = recalc
                         err_data = recalc if scale == 'index' else best_results_renamed
                         print(f'{ft_name:<8} - {col:<18} - {str(algo_db[meta_ft_cols].shape):<10} - Best Model: {best_model:<17} - {error_info_as_string(err_data, col)}')
@@ -176,3 +182,5 @@ if __name__ == '__main__':
 
             final_results = pd.concat(all_results.values(), keys=all_results.keys(), axis=1)
             final_results.to_pickle(os.path.join(ML_RES_DIR, f'{ft_name}.pkl'))
+
+    print(best_regr)
