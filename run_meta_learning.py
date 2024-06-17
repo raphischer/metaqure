@@ -141,7 +141,6 @@ if __name__ == '__main__':
                     opt_find_db = algo_db.iloc[cv_splits[0][0]] # first cv train split used for finding optimal model choice
                     opt_find_cv_splits = ds_cv_split(opt_find_db['dataset'], n_splits=5)
                     print(f'\n\n\n\n:::::::::::::::: META LEARN FOR {algo} USING {ft_name} with {scale}\n')
-                    compound_col_res_idc = {}
                     for col, col_meta in meta['properties'].items():
                         # 1. find optimal model choice on subset of the data (first cv train split)
                         regr_results = {}
@@ -160,7 +159,6 @@ if __name__ == '__main__':
                         best_model_results = evaluate_regressor(best_model, algo_db[meta_ft_cols], algo_db[col], cv_splits, args.seed, scale)
                         best_results_renamed = best_model_results.rename(lambda c_ : f'{col}_{c_}', axis=1)
                         all_results[scale].loc[algo_db.index,best_results_renamed.columns] = best_results_renamed
-                        compound_col_res_idc[col] = len(all_results) - 1 # remember the columns that will be important for the compound index
                         if scale == 'index': # recalculate index predictions to real value predictions
                             recalc = recalculate_original_values(best_model_results, col, algo_db, value_db.loc[algo_db.index], col_meta).rename(lambda c_ : f'{col}_{c_}', axis=1)
                             all_results['recalc_value'].loc[algo_db.index,recalc.columns] = recalc
