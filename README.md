@@ -20,7 +20,7 @@ index_only_db = prop_dict_to_val(rated_db, 'index')
 
 ## Repository Structure
 - The complete MetaQuRe data can be loaded as a single [pandas dataframe](./exp_results/databases/metaqure.pkl)
-- The [strep](./strep) library contains code for performing index-scaling, as well as our exploration tool
+- The [strep](./strep) library contains code for performing index-scaling, as well as our exploration tool. It was created for our paper on [Sustainable and Trustworthy Reporting](https://github.com/raphischer/strep).
 - Our [experimental results](./exp_results) contain the individual result databases of MetaQuRe, the hyperparameters for all algorithms, the meta-features for our data sets, and the meta-learning predictions for all feature sets (stored as individual dataframes)
 - All experiments and evaluations can be performed with the top level `run_` scripts (`.py` performs single experiments, `.sh` runs multiple experiments)
 - There are additional scripts for loading data and methods, as well as a `json` file with meta information on the measures (properties)
