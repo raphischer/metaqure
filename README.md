@@ -26,7 +26,7 @@ index_only_db = prop_dict_to_val(rated_db, 'index')
 - There are additional scripts for loading data and methods, as well as a `json` file with meta information on the measures (properties)
 
 ## Installation
-Create a suitable Python environment created via
+Create a suitable Python environment via
 
 ```
 conda create --name metaqure python==3.10
