@@ -35,10 +35,10 @@ pip install -r requirements.txt
 ```
 
 ## Jetson
-Instead of installing `codecarbon`, make sure to properly [setup up jetson-stats](https://github.com/rbonghi/jetson_stats).
+If you want to perform experiments on AGX Jetson (like we did), you cannot use `codecarbon` for profiling the resource consumption. So instead of installing `codecarbon`, make sure to properly [setup up jetson-stats](https://github.com/rbonghi/jetson_stats). Our code should autodetect which profiling is available based on the installed libraries.
 
 ## Usage
-You can replicate our experiments or assemble MetaQuRe for your own environment by running the individual scripts. Pass data and log directories depending on your own directory management. We performed experiments in the following order (note that this will likely take several days!):
+You can replicate our experiments or assemble MetaQuRe for your own custom environment by running the individual scripts. Pass data and log directories depending on your own directory management. We performed experiments in the following order (note that this will likely take several days!):
 ```
 bash run_method_algos.sh $datadir $logdir
 bash run_method_baselines.sh $datadir $logdir
