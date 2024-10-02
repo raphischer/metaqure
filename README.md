@@ -51,7 +51,11 @@ After that, you can either explore the results [interactively](./eval_interactiv
 
 **! BEING SUSTAINABLE IS A COMMUNITY EFFORT !**
 
-If you are interested in replicating our experiments and making these results available, feel free to get in touch - we will gladly include them and highlight you as contributor!
+If you are interested in replicating our experiments and making these results available, please get in touch - we will gladly include them and highlight you as contributor!
+
+
+## Issues and Contribution
+If you experience any issues or want to contribute, feel free to reach out via the contact information in our paper!
 
 ## Citation
 If you appreciate our work and code, please cite [our paper](https://link.springer.com/chapter/10.1007/978-3-031-70368-3_13) as given by Springer:
