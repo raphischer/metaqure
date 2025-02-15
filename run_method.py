@@ -7,7 +7,7 @@ import time
 import numpy as np
 from sklearn.metrics import accuracy_score, top_k_accuracy_score, f1_score, precision_score, recall_score
 
-from strep.util import create_output_dir, write_json
+from strep.util import create_output_dir, write_json, read_json
 from strep.monitoring import init_monitoring
 from data_loading import data_variant_loaders, ds_name_to_subsample
 from run_hyperparam_search import init_with_best_hyperparams
@@ -132,3 +132,14 @@ if __name__ == "__main__":
     variant_loaders = data_variant_loaders(args.ds, args.data_home, args.seed, args.subsample)
     for ds_variant in variant_loaders:
         evaluate_single(ds_variant, args)
+
+        # sizes_file = os.path.join(os.getcwd(), 'dataset_split_sizes.json')
+        # stored_sizes = read_json(sizes_file) if os.path.isfile(sizes_file) else {}
+        # X_train, X_test, y_train, y_test, _, ds = ds_variant()
+        # if ds in stored_sizes:
+        #     if X_train.shape != tuple(stored_sizes[ds]["train"]) or X_test.shape != tuple(stored_sizes[ds]["test"]):
+        #         print(f"DS {ds:<50} - already found shapes", stored_sizes[ds]["train"], stored_sizes[ds]["test"], "but they do not match with the loaded data shapes!", X_train.shape, X_test.shape)
+        # else:
+        #     print(f"Storing sizes for {ds}")
+        #     stored_sizes[ds] = {"train": X_train.shape, "test": X_test.shape}
+        #     write_json(sizes_file, stored_sizes)
