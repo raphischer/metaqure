@@ -1,13 +1,16 @@
 # MetaQuRe: Meta-Learning from Model Quality and Resource Consumption
 
-Code and results for our associated research paper, which is [published at ECML PKDD 2024 (Research Track)](https://link.springer.com/chapter/10.1007/978-3-031-70368-3_13). Our work and data allows to meta-learn from model quality and resource consumption, which benefits sustainability and resource-awareness in automated machine learning!
+Code and results for our associated research paper, which was [published at ECML-PKDD '24](https://link.springer.com/chapter/10.1007/978-3-031-70368-3_13). Our work and data allows to meta-learn from model quality and resource consumption, which benefits sustainability and resource-awareness in automated machine learning!
 
 ## Interactive Exploration
-You can dive into our assembled **MetaQuRe** data set via our [interactive exploration tool](https://strep.onrender.com/?database=MetaQuRe) - no code needs to be run locally!
-Note that this webpage is [work in progress](https://github.com/raphischer/strep) and subject to change, so you might encounter delays, off-times, and slight differences to our paper.
+You can dive into our assembled **MetaQuRe** data set via our [interactive exploration tool](https://strep.lamarr.tu-dortmund.de/?database=MetaQuRe) - no code needs to be run locally!
+Note that this webpage is [work in progress](https://github.com/raphischer/strep) and subject to change, so you might encounter delays, off-times, and slight differences to our paper. 
 
-## Accessing **MetaQuRe** data
-If you want to explore our data from code, you can easily load it via
+## Updated Results
+Writing my PhD thesis I re-investigated the experimental results of this work, finding that our meta-learning approach is far more efficient than TabPFN in a fair comparison - details are described in [Chapter 5 of my thesis](http://dx.doi.org/10.17877/DE290R-25716).
+
+## Loading and Learning from the **MetaQuRe** data
+If you want to explore our data from code or train respective meta-learners, you can easily load it via
 ```python
 from strep.index_and_rate import load_database, rate_database
 from run_log_processing import DB_COMPLETE
@@ -86,4 +89,3 @@ isbn="978-3-031-70368-3"
 ```
 
 © Raphael Fischer
-
